@@ -29,28 +29,28 @@ from jans.pycloudlib.persistence.couchbase import CouchbaseClient
 
 from settings import LOGGING_CONFIG
 
-JANS_CACHE_TYPE = os.environ.get("JANS_CACHE_TYPE", "NATIVE_PERSISTENCE")
-JANS_REDIS_URL = os.environ.get('JANS_REDIS_URL', 'localhost:6379')
-JANS_REDIS_TYPE = os.environ.get('JANS_REDIS_TYPE', 'STANDALONE')
-JANS_REDIS_USE_SSL = os.environ.get("JANS_REDIS_USE_SSL", False)
-JANS_REDIS_SSL_TRUSTSTORE = os.environ.get("JANS_REDIS_SSL_TRUSTSTORE", "")
-JANS_REDIS_SENTINEL_GROUP = os.environ.get("JANS_REDIS_SENTINEL_GROUP", "")
+CLOUD_NATIVE_CACHE_TYPE = os.environ.get("CLOUD_NATIVE_CACHE_TYPE", "NATIVE_PERSISTENCE")
+CLOUD_NATIVE_REDIS_URL = os.environ.get('CLOUD_NATIVE_REDIS_URL', 'localhost:6379')
+CLOUD_NATIVE_REDIS_TYPE = os.environ.get('CLOUD_NATIVE_REDIS_TYPE', 'STANDALONE')
+CLOUD_NATIVE_REDIS_USE_SSL = os.environ.get("CLOUD_NATIVE_REDIS_USE_SSL", False)
+CLOUD_NATIVE_REDIS_SSL_TRUSTSTORE = os.environ.get("CLOUD_NATIVE_REDIS_SSL_TRUSTSTORE", "")
+CLOUD_NATIVE_REDIS_SENTINEL_GROUP = os.environ.get("CLOUD_NATIVE_REDIS_SENTINEL_GROUP", "")
 
-JANS_MEMCACHED_URL = os.environ.get('JANS_MEMCACHED_URL', 'localhost:11211')
+CLOUD_NATIVE_MEMCACHED_URL = os.environ.get('CLOUD_NATIVE_MEMCACHED_URL', 'localhost:11211')
 
-JANS_OXTRUST_CONFIG_GENERATION = os.environ.get("JANS_OXTRUST_CONFIG_GENERATION", True)
-JANS_PERSISTENCE_TYPE = os.environ.get("JANS_PERSISTENCE_TYPE", "couchbase")
-JANS_PERSISTENCE_LDAP_MAPPING = os.environ.get("JANS_PERSISTENCE_LDAP_MAPPING", "default")
-JANS_LDAP_URL = os.environ.get("JANS_LDAP_URL", "localhost:1636")
+CLOUD_NATIVE_OXTRUST_CONFIG_GENERATION = os.environ.get("CLOUD_NATIVE_OXTRUST_CONFIG_GENERATION", True)
+CLOUD_NATIVE_PERSISTENCE_TYPE = os.environ.get("CLOUD_NATIVE_PERSISTENCE_TYPE", "couchbase")
+CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING = os.environ.get("CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING", "default")
+CLOUD_NATIVE_LDAP_URL = os.environ.get("CLOUD_NATIVE_LDAP_URL", "localhost:1636")
 
-JANS_OXTRUST_API_ENABLED = os.environ.get("JANS_OXTRUST_API_ENABLED", False)
-JANS_OXTRUST_API_TEST_MODE = os.environ.get("JANS_OXTRUST_API_TEST_MODE", False)
-JANS_PASSPORT_ENABLED = os.environ.get("JANS_PASSPORT_ENABLED", False)
-JANS_RADIUS_ENABLED = os.environ.get("JANS_RADIUS_ENABLED", False)
-JANS_CASA_ENABLED = os.environ.get("JANS_CASA_ENABLED", False)
-JANS_SAML_ENABLED = os.environ.get("JANS_SAML_ENABLED", False)
-JANS_SCIM_ENABLED = os.environ.get("JANS_SCIM_ENABLED", False)
-JANS_SCIM_TEST_MODE = os.environ.get("JANS_SCIM_TEST_MODE", False)
+CLOUD_NATIVE_OXTRUST_API_ENABLED = os.environ.get("CLOUD_NATIVE_OXTRUST_API_ENABLED", False)
+CLOUD_NATIVE_OXTRUST_API_TEST_MODE = os.environ.get("CLOUD_NATIVE_OXTRUST_API_TEST_MODE", False)
+CLOUD_NATIVE_PASSPORT_ENABLED = os.environ.get("CLOUD_NATIVE_PASSPORT_ENABLED", False)
+CLOUD_NATIVE_RADIUS_ENABLED = os.environ.get("CLOUD_NATIVE_RADIUS_ENABLED", False)
+CLOUD_NATIVE_CASA_ENABLED = os.environ.get("CLOUD_NATIVE_CASA_ENABLED", False)
+CLOUD_NATIVE_SAML_ENABLED = os.environ.get("CLOUD_NATIVE_SAML_ENABLED", False)
+CLOUD_NATIVE_SCIM_ENABLED = os.environ.get("CLOUD_NATIVE_SCIM_ENABLED", False)
+CLOUD_NATIVE_SCIM_TEST_MODE = os.environ.get("CLOUD_NATIVE_SCIM_TEST_MODE", False)
 
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("entrypoint")
@@ -134,10 +134,10 @@ def get_bucket_mappings():
 
     })
 
-    if JANS_PERSISTENCE_TYPE != "couchbase":
+    if CLOUD_NATIVE_PERSISTENCE_TYPE != "couchbase":
         bucket_mappings = OrderedDict({
             name: mapping for name, mapping in bucket_mappings.items()
-            if name != JANS_PERSISTENCE_LDAP_MAPPING
+            if name != CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING
         })
     return bucket_mappings
 
@@ -270,25 +270,25 @@ def render_ldif(src, dst, ctx):
 
 def get_jackrabbit_rmi_url():
     # backward-compat
-    if "JANS_JCA_RMI_URL" in os.environ:
-        return os.environ["JANS_JCA_RMI_URL"]
+    if "CLOUD_NATIVE_JCA_RMI_URL" in os.environ:
+        return os.environ["CLOUD_NATIVE_JCA_RMI_URL"]
 
     # new style ENV
-    rmi_url = os.environ.get("JANS_JACKRABBIT_RMI_URL", "")
+    rmi_url = os.environ.get("CLOUD_NATIVE_JACKRABBIT_RMI_URL", "")
     if rmi_url:
         return rmi_url
 
     # fallback to default
-    base_url = os.environ.get("JANS_JACKRABBIT_URL", "http://localhost:8080")
+    base_url = os.environ.get("CLOUD_NATIVE_JACKRABBIT_URL", "http://localhost:8080")
     return f"{base_url}/rmi"
 
 
 def get_jackrabbit_creds():
-    username = os.environ.get("JANS_JACKRABBIT_ADMIN_ID", "admin")
+    username = os.environ.get("CLOUD_NATIVE_JACKRABBIT_ADMIN_ID", "admin")
     password = ""
 
     password_file = os.environ.get(
-        "JANS_JACKRABBIT_ADMIN_PASSWORD_FILE",
+        "CLOUD_NATIVE_JACKRABBIT_ADMIN_PASSWORD_FILE",
         "/etc/gluu/conf/jackrabbit_admin_password",
     )
     with contextlib.suppress(FileNotFoundError):
@@ -308,7 +308,7 @@ def get_base_ctx(manager):
             manager.secret.get("encoded_salt"),
         ).decode()
 
-    doc_store_type = os.environ.get("JANS_DOCUMENT_STORE_TYPE", "LOCAL")
+    doc_store_type = os.environ.get("CLOUD_NATIVE_DOCUMENT_STORE_TYPE", "LOCAL")
     jca_user, jca_pw = get_jackrabbit_creds()
 
     jca_pw_encoded = encode_text(
@@ -317,15 +317,15 @@ def get_base_ctx(manager):
     ).decode()
 
     ctx = {
-        'cache_provider_type': JANS_CACHE_TYPE,
-        'redis_url': JANS_REDIS_URL,
-        'redis_type': JANS_REDIS_TYPE,
+        'cache_provider_type': CLOUD_NATIVE_CACHE_TYPE,
+        'redis_url': CLOUD_NATIVE_REDIS_URL,
+        'redis_type': CLOUD_NATIVE_REDIS_TYPE,
         'redis_pw': redis_pw,
         'redis_pw_encoded': redis_pw_encoded,
-        "redis_use_ssl": "{}".format(as_boolean(JANS_REDIS_USE_SSL)).lower(),
-        "redis_ssl_truststore": JANS_REDIS_SSL_TRUSTSTORE,
-        "redis_sentinel_group": JANS_REDIS_SENTINEL_GROUP,
-        'memcached_url': JANS_MEMCACHED_URL,
+        "redis_use_ssl": "{}".format(as_boolean(CLOUD_NATIVE_REDIS_USE_SSL)).lower(),
+        "redis_ssl_truststore": CLOUD_NATIVE_REDIS_SSL_TRUSTSTORE,
+        "redis_sentinel_group": CLOUD_NATIVE_REDIS_SENTINEL_GROUP,
+        'memcached_url': CLOUD_NATIVE_MEMCACHED_URL,
 
         "document_store_type": doc_store_type,
         "jca_server_url": get_jackrabbit_rmi_url(),
@@ -368,7 +368,7 @@ def get_base_ctx(manager):
         'admin_email': manager.config.get('admin_email'),
         'shibJksFn': manager.config.get('shibJksFn'),
         'shibJksPass': manager.secret.get('shibJksPass'),
-        'oxTrustConfigGeneration': str(as_boolean(JANS_OXTRUST_CONFIG_GENERATION)).lower(),
+        'oxTrustConfigGeneration': str(as_boolean(CLOUD_NATIVE_OXTRUST_CONFIG_GENERATION)).lower(),
         'encoded_shib_jks_pw': manager.secret.get('encoded_shib_jks_pw'),
         'scim_rs_client_jks_fn': manager.config.get('scim_rs_client_jks_fn'),
         'scim_rs_client_jks_pass_encoded': manager.secret.get('scim_rs_client_jks_pass_encoded'),
@@ -392,10 +392,10 @@ def get_base_ctx(manager):
         "enableRadiusScripts": "false",  # @TODO: enable it?
         "gluu_ro_client_base64_jwks": manager.secret.get("gluu_ro_client_base64_jwks"),
 
-        "gluuPassportEnabled": str(as_boolean(JANS_PASSPORT_ENABLED)).lower(),
-        "gluuRadiusEnabled": str(as_boolean(JANS_RADIUS_ENABLED)).lower(),
-        "gluuSamlEnabled": str(as_boolean(JANS_SAML_ENABLED)).lower(),
-        "gluuScimEnabled": str(as_boolean(JANS_SCIM_ENABLED)).lower(),
+        "gluuPassportEnabled": str(as_boolean(CLOUD_NATIVE_PASSPORT_ENABLED)).lower(),
+        "gluuRadiusEnabled": str(as_boolean(CLOUD_NATIVE_RADIUS_ENABLED)).lower(),
+        "gluuSamlEnabled": str(as_boolean(CLOUD_NATIVE_SAML_ENABLED)).lower(),
+        "gluuScimEnabled": str(as_boolean(CLOUD_NATIVE_SCIM_ENABLED)).lower(),
 
         "pairwiseCalculationKey": manager.secret.get("pairwiseCalculationKey"),
         "pairwiseCalculationSalt": manager.secret.get("pairwiseCalculationSalt"),
@@ -409,21 +409,21 @@ def get_base_ctx(manager):
         "fido2ConfigFolder": manager.config.get("fido2ConfigFolder"),
 
         "admin_inum": manager.config.get("admin_inum"),
-        "enable_oxtrust_api_access_policy": str(as_boolean(JANS_OXTRUST_API_ENABLED)).lower(),
-        "oxtrust_api_test_mode": str(as_boolean(JANS_OXTRUST_API_TEST_MODE)).lower(),
+        "enable_oxtrust_api_access_policy": str(as_boolean(CLOUD_NATIVE_OXTRUST_API_ENABLED)).lower(),
+        "oxtrust_api_test_mode": str(as_boolean(CLOUD_NATIVE_OXTRUST_API_TEST_MODE)).lower(),
         "api_test_client_id": manager.config.get("api_test_client_id"),
         "encoded_api_test_client_secret": encode_text(
             manager.secret.get("api_test_client_secret"),
             manager.secret.get("encoded_salt"),
         ).decode(),
-        "enable_scim_access_policy": str(as_boolean(JANS_SCIM_ENABLED) or as_boolean(JANS_PASSPORT_ENABLED)).lower(),
-        "scimTestMode": str(as_boolean(JANS_SCIM_TEST_MODE)).lower(),
+        "enable_scim_access_policy": str(as_boolean(CLOUD_NATIVE_SCIM_ENABLED) or as_boolean(CLOUD_NATIVE_PASSPORT_ENABLED)).lower(),
+        "scimTestMode": str(as_boolean(CLOUD_NATIVE_SCIM_TEST_MODE)).lower(),
         "scim_test_client_id": manager.config.get("scim_test_client_id"),
         "encoded_scim_test_client_secret": encode_text(
             manager.secret.get("scim_test_client_secret"),
             manager.secret.get("encoded_salt"),
         ).decode(),
-        "casa_enable_script": str(as_boolean(JANS_CASA_ENABLED)).lower(),
+        "casa_enable_script": str(as_boolean(CLOUD_NATIVE_CASA_ENABLED)).lower(),
         "oxd_hostname": "localhost",
         "oxd_port": "8443",
     }
@@ -545,7 +545,7 @@ def prepare_template_ctx(manager):
 
 class CouchbaseBackend(object):
     def __init__(self, manager):
-        hostname = os.environ.get("JANS_COUCHBASE_URL", "localhost")
+        hostname = os.environ.get("CLOUD_NATIVE_COUCHBASE_URL", "localhost")
         user = get_couchbase_superuser(manager) or get_couchbase_user(manager)
 
         password = ""
@@ -575,7 +575,7 @@ class CouchbaseBackend(object):
             logger.error("Available quota on couchbase node is less than {} MB".format(min_mem))
 
         # always create `gluu` bucket even when `default` mapping stored in LDAP
-        if JANS_PERSISTENCE_TYPE == "hybrid" and JANS_PERSISTENCE_LDAP_MAPPING == "default":
+        if CLOUD_NATIVE_PERSISTENCE_TYPE == "hybrid" and CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING == "default":
             memsize = 100
 
             logger.info("Creating bucket {0} with type {1} and RAM size {2}".format("gluu", bucket_type, memsize))
@@ -707,8 +707,8 @@ class CouchbaseBackend(object):
 
     def initialize(self):
         def is_initialized():
-            persistence_type = os.environ.get("JANS_PERSISTENCE_TYPE", "couchbase")
-            ldap_mapping = os.environ.get("JANS_PERSISTENCE_LDAP_MAPPING", "default")
+            persistence_type = os.environ.get("CLOUD_NATIVE_PERSISTENCE_TYPE", "couchbase")
+            ldap_mapping = os.environ.get("CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING", "default")
 
             # only `gluu` and `gluu_user` buckets that may have initial data;
             # these data also affected by LDAP mapping selection;
@@ -729,7 +729,7 @@ class CouchbaseBackend(object):
             return False
 
         should_skip = as_boolean(
-            os.environ.get("JANS_PERSISTENCE_SKIP_EXISTING", True),
+            os.environ.get("CLOUD_NATIVE_PERSISTENCE_SKIP_EXISTING", True),
         )
         if should_skip and is_initialized():
             logger.info("Couchbase backend already initialized")
@@ -760,7 +760,7 @@ class CouchbaseBackend(object):
 
 class LDAPBackend(object):
     def __init__(self, manager):
-        host = JANS_LDAP_URL
+        host = CLOUD_NATIVE_LDAP_URL
         user = manager.config.get("ldap_binddn")
         password = decode_text(
             manager.secret.get("encoded_ox_ldap_pw"),
@@ -846,8 +846,8 @@ class LDAPBackend(object):
         }
 
         # hybrid means only a subsets of ldif are needed
-        if JANS_PERSISTENCE_TYPE == "hybrid":
-            mapping = JANS_PERSISTENCE_LDAP_MAPPING
+        if CLOUD_NATIVE_PERSISTENCE_TYPE == "hybrid":
+            mapping = CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING
             ldif_mappings = {mapping: ldif_mappings[mapping]}
 
             # # these mappings require `base.ldif`
@@ -893,8 +893,8 @@ class LDAPBackend(object):
 
     def initialize(self):
         def is_initialized():
-            persistence_type = os.environ.get("JANS_PERSISTENCE_TYPE", "ldap")
-            ldap_mapping = os.environ.get("JANS_PERSISTENCE_LDAP_MAPPING", "default")
+            persistence_type = os.environ.get("CLOUD_NATIVE_PERSISTENCE_TYPE", "ldap")
+            ldap_mapping = os.environ.get("CLOUD_NATIVE_PERSISTENCE_LDAP_MAPPING", "default")
 
             # a minimum service stack is having oxTrust, hence check whether entry
             # for oxTrust exists in LDAP
@@ -925,7 +925,7 @@ class LDAPBackend(object):
                 return bool(conn.entries)
 
         should_skip = as_boolean(
-            os.environ.get("JANS_PERSISTENCE_SKIP_EXISTING", True),
+            os.environ.get("CLOUD_NATIVE_PERSISTENCE_SKIP_EXISTING", True),
         )
         if should_skip and is_initialized():
             logger.info("LDAP backend already initialized")
@@ -953,7 +953,7 @@ def main():
     }
 
     # initialize the backend
-    backend_cls = backend_classes.get(JANS_PERSISTENCE_TYPE)
+    backend_cls = backend_classes.get(CLOUD_NATIVE_PERSISTENCE_TYPE)
     if not backend_cls:
         raise ValueError("unsupported backend")
 
