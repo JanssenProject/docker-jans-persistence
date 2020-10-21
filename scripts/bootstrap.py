@@ -162,7 +162,7 @@ class AttrProcessor(object):
     def process(self):
         attrs = {}
 
-        with open("/app/static/opendj_types.json") as f:
+        with open("/app/static/opendj/opendj_types.json") as f:
             attr_maps = json.loads(f.read())
             for type_, names in attr_maps.items():
                 for name in names:
@@ -484,9 +484,9 @@ def merge_oxtrust_ctx(ctx):
 def merge_auth_ctx(ctx):
     basedir = '/app/templates/jans-auth'
     file_mappings = {
-        'oxauth_config_base64': 'oxauth-config.json',
-        'oxauth_static_conf_base64': 'oxauth-static-conf.json',
-        'oxauth_error_base64': 'oxauth-errors.json',
+        'oxauth_config_base64': 'dynamic-conf.json',
+        'oxauth_static_conf_base64': 'static-conf.json',
+        'oxauth_error_base64': 'errors.json',
     }
 
     for key, file_ in file_mappings.items():
@@ -608,7 +608,7 @@ class CouchbaseBackend(object):
     def create_indexes(self, bucket_mappings):
         buckets = [mapping["bucket"] for _, mapping in bucket_mappings.items()]
 
-        with open("/app/static/couchbase_index.json") as f:
+        with open("/app/static/couchbase/index.json") as f:
             txt = f.read().replace("!bucket_prefix!", "jans")
             indexes = json.loads(txt)
 
