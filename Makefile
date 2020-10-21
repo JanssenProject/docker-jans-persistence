@@ -1,5 +1,5 @@
 CN_VERSION=5.0.0
-IMAGE_NAME=janssenproject/persistence
+IMAGE_NAME=janssenproject/persistence-loader
 UNSTABLE_VERSION=dev
 
 build-dev:

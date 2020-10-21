@@ -17,8 +17,7 @@
     "static" : [
       [["LOWER(`uid`)"], "objectClass = \"jansPerson\""],
       [["LOWER(`mail`)"], "objectClass = \"jansPerson\""],
-      [["exp"], "del=true"],
-      [["distinct (array `oxExternalUid_` for `oxExternalUid_` in `oxExternalUid` end)"], "objectClass = \"jansPerson\""]
+      [["exp"], "del=true"]
     ]
   },
 

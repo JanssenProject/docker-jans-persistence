@@ -1,10 +1,10 @@
 # oxAuth is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
-# Copyright (c) 2017, Gluu
+# Copyright (c) 2017, Janssen
 #
 # Author: Yuriy Zabrovarnyy
 #
 
-from org.gluu.model.custom.script.type.uma import UmaClaimsGatheringType
+from org.jans.model.custom.script.type.uma import UmaClaimsGatheringType
 
 class UmaClaimsGathering(UmaClaimsGatheringType):
 

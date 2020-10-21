@@ -57,7 +57,7 @@ logger = logging.getLogger("entrypoint")
 
 
 def get_key_from(dn):
-    # for example: `"inum=29DA,ou=attributes,o=gluu"`
+    # for example: `"inum=29DA,ou=attributes,o=jans"`
     # becomes `["29DA", "attributes"]`
     dns = [i.split("=")[-1] for i in dn.split(",") if i != "o=jans"]
     dns.reverse()
@@ -76,22 +76,27 @@ def get_bucket_mappings():
                 "scopes.ldif",
                 "scripts.ldif",
                 "configuration.ldif",
-                "scim.ldif",
-                "fido2.ldif",
-                "oxidp.ldif",
-                "oxtrust_api.ldif",
-                "passport.ldif",
-                "oxpassport-config.ldif",
-                "jans_radius_base.ldif",
-                "jans_radius_server.ldif",
-                "clients.ldif",
-                "oxtrust_api_clients.ldif",
-                "scim_clients.ldif",
+                "jans-auth/configuration.ldif",
+                "jans-auth/clients.ldif",
+                "jans-fido2/fido2.ldif",
+                "jans-scim/configuration.ldif",
+                "jans-scim/clients.ldif",
+                # "scim.ldif",
+                # "fido2.ldif",
+                # "oxidp.ldif",
+                # "oxtrust_api.ldif",
+                # "passport.ldif",
+                # "oxpassport-config.ldif",
+                # "jans_radius_base.ldif",
+                # "jans_radius_server.ldif",
+                # "clients.ldif",
+                # "oxtrust_api_clients.ldif",
+                # "scim_clients.ldif",
                 "o_metric.ldif",
-                "jans_radius_clients.ldif",
-                "passport_clients.ldif",
-                "casa.ldif",
-                "scripts_casa.ldif",
+                # "jans_radius_clients.ldif",
+                # "passport_clients.ldif",
+                # "casa.ldif",
+                # "scripts_casa.ldif",
             ],
             "mem_alloc": 100,
             "document_key_prefix": [],
@@ -99,8 +104,8 @@ def get_bucket_mappings():
         "user": {
             "bucket": "jans_user",
             "files": [
-                "people.ldif",
-                "groups.ldif",
+                # "people.ldif",
+                # "groups.ldif",
             ],
             "mem_alloc": 300,
             "document_key_prefix": ["groups_", "people_", "authorizations_"],
@@ -163,7 +168,8 @@ class AttrProcessor(object):
                 for name in names:
                     attrs[name] = {"type": type_, "multivalued": False}
 
-        with open("/app/static/gluu_schema.json") as f:
+        # with open("/app/static/gluu_schema.json") as f:
+        with open("/app/static/jans_schema.json") as f:
             gluu_schema = json.loads(f.read()).get("attributeTypes", {})
             for schema in gluu_schema:
                 if schema.get("json"):
@@ -253,7 +259,8 @@ def transform_entry(entry, attr_processor):
         ocs = entry[k]
 
         for oc in ocs:
-            remove_oc = any(["Custom" in oc, "gluu" not in oc.lower()])
+            # remove_oc = any(["Custom" in oc, "gluu" not in oc.lower()])
+            remove_oc = any(["Custom" in oc, not oc.lower().startswith("js")])
             if len(ocs) > 1 and remove_oc:
                 ocs.remove(oc)
         entry[k] = ocs[0]
@@ -289,7 +296,7 @@ def get_jackrabbit_creds():
 
     password_file = os.environ.get(
         "CN_JACKRABBIT_ADMIN_PASSWORD_FILE",
-        "/etc/gluu/conf/jackrabbit_admin_password",
+        "/etc/jans/conf/jackrabbit_admin_password",
     )
     with contextlib.suppress(FileNotFoundError):
         with open(password_file) as f:
@@ -339,19 +346,19 @@ def get_base_ctx(manager):
         'encoded_ox_ldap_pw': manager.secret.get('encoded_ox_ldap_pw'),
         'jetty_base': manager.config.get('jetty_base'),
         'orgName': manager.config.get('orgName'),
-        'auth-server_client_id': manager.config.get('auth-server_client_id'),
-        'auth-serverClient_encoded_pw': manager.secret.get('auth-serverClient_encoded_pw'),
+        'oxauth_client_id': manager.config.get('oxauth_client_id'),
+        'oxauthClient_encoded_pw': manager.secret.get('oxauthClient_encoded_pw'),
         'hostname': manager.config.get('hostname'),
         'idp_client_id': manager.config.get('idp_client_id'),
         'idpClient_encoded_pw': manager.secret.get('idpClient_encoded_pw'),
-        'auth-server_openid_key_base64': manager.secret.get('auth-server_openid_key_base64'),
-        'passport_rs_client_id': manager.config.get('passport_rs_client_id'),
-        'passport_rs_client_base64_jwks': manager.secret.get('passport_rs_client_base64_jwks'),
-        'passport_rs_client_cert_alias': manager.config.get('passport_rs_client_cert_alias'),
-        'passport_rp_client_id': manager.config.get('passport_rp_client_id'),
-        'passport_rp_client_base64_jwks': manager.secret.get('passport_rp_client_base64_jwks'),
-        "passport_rp_client_jks_fn": manager.config.get("passport_rp_client_jks_fn"),
-        "passport_rp_client_jks_pass": manager.secret.get("passport_rp_client_jks_pass"),
+        'oxauth_openid_key_base64': manager.secret.get('oxauth_openid_key_base64'),
+        # 'passport_rs_client_id': manager.config.get('passport_rs_client_id'),
+        # 'passport_rs_client_base64_jwks': manager.secret.get('passport_rs_client_base64_jwks'),
+        # 'passport_rs_client_cert_alias': manager.config.get('passport_rs_client_cert_alias'),
+        # 'passport_rp_client_id': manager.config.get('passport_rp_client_id'),
+        # 'passport_rp_client_base64_jwks': manager.secret.get('passport_rp_client_base64_jwks'),
+        # "passport_rp_client_jks_fn": manager.config.get("passport_rp_client_jks_fn"),
+        # "passport_rp_client_jks_pass": manager.secret.get("passport_rp_client_jks_pass"),
         # "encoded_ldap_pw": manager.secret.get('encoded_ldap_pw'),
         "encoded_oxtrust_admin_password": manager.secret.get('encoded_oxtrust_admin_password'),
         'scim_rs_client_id': manager.config.get('scim_rs_client_id'),
@@ -360,10 +367,10 @@ def get_base_ctx(manager):
         'scim_rp_client_id': manager.config.get('scim_rp_client_id'),
         'scim_rp_client_base64_jwks': manager.secret.get('scim_rp_client_base64_jwks'),
         'scim_resource_oxid': manager.config.get('scim_resource_oxid'),
-        'passport_rp_ii_client_id': manager.config.get("passport_rp_ii_client_id"),
-        'api_rs_client_base64_jwks': manager.secret.get("api_rs_client_base64_jwks"),
-        'api_rs_client_cert_alias': manager.config.get("api_rs_client_cert_alias"),
-        'api_rp_client_base64_jwks': manager.secret.get("api_rp_client_base64_jwks"),
+        # 'passport_rp_ii_client_id': manager.config.get("passport_rp_ii_client_id"),
+        # 'api_rs_client_base64_jwks': manager.secret.get("api_rs_client_base64_jwks"),
+        # 'api_rs_client_cert_alias': manager.config.get("api_rs_client_cert_alias"),
+        # 'api_rp_client_base64_jwks': manager.secret.get("api_rp_client_base64_jwks"),
 
         'admin_email': manager.config.get('admin_email'),
         'shibJksFn': manager.config.get('shibJksFn'),
@@ -377,20 +384,20 @@ def get_base_ctx(manager):
         'shibboleth_version': manager.config.get('shibboleth_version'),
         'idp3Folder': manager.config.get('idp3Folder'),
         'ldap_site_binddn': manager.config.get('ldap_site_binddn'),
-        'api_rs_client_jks_fn': manager.config.get("api_rs_client_jks_fn"),
-        'api_rs_client_jks_pass_encoded': manager.secret.get("api_rs_client_jks_pass_encoded"),
+        # 'api_rs_client_jks_fn': manager.config.get("api_rs_client_jks_fn"),
+        # 'api_rs_client_jks_pass_encoded': manager.secret.get("api_rs_client_jks_pass_encoded"),
 
-        "oxtrust_requesting_party_client_id": manager.config.get("oxtrust_requesting_party_client_id"),
-        "oxtrust_resource_server_client_id": manager.config.get("oxtrust_resource_server_client_id"),
-        "oxtrust_resource_id": manager.config.get("oxtrust_resource_id"),
+        # "oxtrust_requesting_party_client_id": manager.config.get("oxtrust_requesting_party_client_id"),
+        # "oxtrust_resource_server_client_id": manager.config.get("oxtrust_resource_server_client_id"),
+        # "oxtrust_resource_id": manager.config.get("oxtrust_resource_id"),
         "passport_resource_id": manager.config.get("passport_resource_id"),
 
         "gluu_radius_client_id": manager.config.get("gluu_radius_client_id"),
         "gluu_ro_encoded_pw": manager.secret.get("gluu_ro_encoded_pw"),
         # "super_gluu_ro_session_script": manager.config.get("super_gluu_ro_session_script"),
         # "super_gluu_ro_script": manager.config.get("super_gluu_ro_script"),
-        "enableRadiusScripts": "false",  # @TODO: enable it?
-        "gluu_ro_client_base64_jwks": manager.secret.get("gluu_ro_client_base64_jwks"),
+        # "enableRadiusScripts": "false",  # @TODO: enable it?
+        # "gluu_ro_client_base64_jwks": manager.secret.get("gluu_ro_client_base64_jwks"),
 
         "gluuPassportEnabled": str(as_boolean(CN_PASSPORT_ENABLED)).lower(),
         "gluuRadiusEnabled": str(as_boolean(CN_RADIUS_ENABLED)).lower(),
@@ -400,22 +407,22 @@ def get_base_ctx(manager):
         "pairwiseCalculationKey": manager.secret.get("pairwiseCalculationKey"),
         "pairwiseCalculationSalt": manager.secret.get("pairwiseCalculationSalt"),
         "default_openid_jks_dn_name": manager.config.get("default_openid_jks_dn_name"),
-        "auth-server_openid_jks_fn": manager.config.get("auth-server_openid_jks_fn"),
-        "auth-server_openid_jks_pass": manager.secret.get("auth-server_openid_jks_pass"),
-        "auth-server_legacyIdTokenClaims": manager.config.get("auth-server_legacyIdTokenClaims"),
+        "oxauth_openid_jks_fn": manager.config.get("oxauth_openid_jks_fn"),
+        "oxauth_openid_jks_pass": manager.secret.get("oxauth_openid_jks_pass"),
+        "oxauth_legacyIdTokenClaims": manager.config.get("oxauth_legacyIdTokenClaims"),
         "passportSpTLSCert": manager.config.get("passportSpTLSCert"),
         "passportSpTLSKey": manager.config.get("passportSpTLSKey"),
-        "auth-server_openidScopeBackwardCompatibility": manager.config.get("auth-server_openidScopeBackwardCompatibility"),
+        "oxauth_openidScopeBackwardCompatibility": manager.config.get("oxauth_openidScopeBackwardCompatibility"),
         "fido2ConfigFolder": manager.config.get("fido2ConfigFolder"),
 
         "admin_inum": manager.config.get("admin_inum"),
         "enable_oxtrust_api_access_policy": str(as_boolean(CN_OXTRUST_API_ENABLED)).lower(),
         "oxtrust_api_test_mode": str(as_boolean(CN_OXTRUST_API_TEST_MODE)).lower(),
         "api_test_client_id": manager.config.get("api_test_client_id"),
-        "encoded_api_test_client_secret": encode_text(
-            manager.secret.get("api_test_client_secret"),
-            manager.secret.get("encoded_salt"),
-        ).decode(),
+        # "encoded_api_test_client_secret": encode_text(
+        #     manager.secret.get("api_test_client_secret"),
+        #     manager.secret.get("encoded_salt"),
+        # ).decode(),
         "enable_scim_access_policy": str(as_boolean(CN_SCIM_ENABLED) or as_boolean(CN_PASSPORT_ENABLED)).lower(),
         "scimTestMode": str(as_boolean(CN_SCIM_TEST_MODE)).lower(),
         "scim_test_client_id": manager.config.get("scim_test_client_id"),
@@ -438,9 +445,7 @@ def merge_extension_ctx(ctx):
 
         for fname in os.listdir(ext_type_dir):
             filepath = os.path.join(ext_type_dir, fname)
-            ext_name = "{}_{}".format(
-                ext_type, os.path.splitext(fname)[0].lower()
-            )
+            ext_name = "{}_{}".format(ext_type, os.path.splitext(fname)[0].lower())
 
             with open(filepath) as fd:
                 ctx[ext_name] = generate_base64_contents(fd.read())
@@ -476,8 +481,8 @@ def merge_oxtrust_ctx(ctx):
     return ctx
 
 
-def merge_oxauth_ctx(ctx):
-    basedir = '/app/templates/oxauth'
+def merge_auth_ctx(ctx):
+    basedir = '/app/templates/jans-auth'
     file_mappings = {
         'oxauth_config_base64': 'oxauth-config.json',
         'oxauth_static_conf_base64': 'oxauth-static-conf.json',
@@ -518,10 +523,10 @@ def merge_passport_ctx(ctx):
 
 
 def merge_fido2_ctx(ctx):
-    basedir = '/app/templates/fido2'
+    basedir = '/app/templates/jans-fido2'
     file_mappings = {
-        'fido2_dynamic_conf_base64': 'fido2-dynamic-conf.json',
-        'fido2_static_conf_base64': 'fido2-static-conf.json',
+        'fido2_dynamic_conf_base64': 'dynamic-conf.json',
+        'fido2_static_conf_base64': 'static-conf.json',
     }
 
     for key, file_ in file_mappings.items():
@@ -534,11 +539,11 @@ def merge_fido2_ctx(ctx):
 def prepare_template_ctx(manager):
     ctx = get_base_ctx(manager)
     ctx = merge_extension_ctx(ctx)
-    ctx = merge_radius_ctx(ctx)
-    ctx = merge_oxauth_ctx(ctx)
-    ctx = merge_oxtrust_ctx(ctx)
-    ctx = merge_oxidp_ctx(ctx)
-    ctx = merge_passport_ctx(ctx)
+    # ctx = merge_radius_ctx(ctx)
+    ctx = merge_auth_ctx(ctx)
+    # ctx = merge_oxtrust_ctx(ctx)
+    # ctx = merge_oxidp_ctx(ctx)
+    # ctx = merge_passport_ctx(ctx)
     ctx = merge_fido2_ctx(ctx)
     return ctx
 
@@ -566,7 +571,7 @@ class CouchbaseBackend(object):
 
         total_mem = (ram_info['quotaTotalPerNode'] - ram_info['quotaUsedPerNode']) / (1024 * 1024)
         # the minimum memory is a sum of required buckets + minimum mem for `gluu` bucket
-        min_mem = sum([value["mem_alloc"] for value in bucket_mappings.values()]) + 100
+        min_mem = sum(value["mem_alloc"] for value in bucket_mappings.values()) + 100
 
         logger.info("Memory size per node for Couchbase buckets was determined as {} MB".format(total_mem))
         logger.info("Minimum memory size per node for Couchbase buckets was determined as {} MB".format(min_mem))
@@ -585,11 +590,11 @@ class CouchbaseBackend(object):
 
         req = self.client.get_buckets()
         if req.ok:
-            remote_buckets = tuple([bckt["name"] for bckt in req.json()])
+            remote_buckets = tuple(bckt["name"] for bckt in req.json())
         else:
-            remote_buckets = tuple([])
+            remote_buckets = ()
 
-        for name, mapping in bucket_mappings.items():
+        for _, mapping in bucket_mappings.items():
             if mapping["bucket"] in remote_buckets:
                 continue
 
@@ -604,7 +609,7 @@ class CouchbaseBackend(object):
         buckets = [mapping["bucket"] for _, mapping in bucket_mappings.items()]
 
         with open("/app/static/couchbase_index.json") as f:
-            txt = f.read().replace("!bucket_prefix!", "gluu")
+            txt = f.read().replace("!bucket_prefix!", "jans")
             indexes = json.loads(txt)
 
         for bucket in buckets:
@@ -673,12 +678,14 @@ class CouchbaseBackend(object):
 
         for _, mapping in bucket_mappings.items():
             for file_ in mapping["files"]:
-                src = "/app/templates/ldif/{}".format(file_)
-                dst = "/app/tmp/{}".format(file_)
+                src = f"/app/templates/{file_}"
+                dst = f"/app/tmp/{file_}"
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+
                 render_ldif(src, dst, ctx)
                 parser = LDIFParser(open(dst, "rb"))
 
-                query_file = "/app/tmp/{}.n1ql".format(file_)
+                query_file = f"/app/tmp/{file_}.n1ql"
 
                 with open(query_file, "a+") as f:
                     for dn, entry in parser.parse():
@@ -713,12 +720,12 @@ class CouchbaseBackend(object):
             # only `gluu` and `gluu_user` buckets that may have initial data;
             # these data also affected by LDAP mapping selection;
             # by default we will choose the `gluu` bucket
-            bucket, key = "gluu", "configuration_oxtrust"
+            bucket, key = "jans", "configuration_oxtrust"
 
             # if `hybrid` is selected and default mapping is stored in LDAP,
             # the `gluu` bucket won't have data, hence we check the `gluu_user` instead
             if persistence_type == "hybrid" and ldap_mapping == "default":
-                bucket, key = "gluu_user", "groups_60B7"
+                bucket, key = "jans_user", "groups_60B7"
 
             query = "SELECT objectClass FROM {0} USE KEYS '{1}'".format(bucket, key)
 
@@ -773,10 +780,10 @@ class LDAPBackend(object):
 
     def check_indexes(self, mapping):
         if mapping == "site":
-            index_name = "oxScriptType"
+            index_name = "jansScrTyp"
             backend = "site"
         # elif mapping == "statistic":
-        #     index_name = "oxMetricType"
+        #     index_name = "jansMetricTyp"
         #     backend = "metric"
         else:
             index_name = "del"
@@ -788,7 +795,7 @@ class LDAPBackend(object):
         max_wait_time = 300
         sleep_duration = 10
 
-        for i in range(0, max_wait_time, sleep_duration):
+        for _ in range(0, max_wait_time, sleep_duration):
             try:
                 with self.conn as conn:
                     conn.search(
@@ -816,26 +823,31 @@ class LDAPBackend(object):
                 "scopes.ldif",
                 "scripts.ldif",
                 "configuration.ldif",
-                "scim.ldif",
-                "fido2.ldif",
-                "oxidp.ldif",
-                "oxtrust_api.ldif",
-                "passport.ldif",
-                "oxpassport-config.ldif",
-                "gluu_radius_base.ldif",
-                "gluu_radius_server.ldif",
-                "clients.ldif",
-                "oxtrust_api_clients.ldif",
-                "scim_clients.ldif",
+                "jans-auth/configuration.ldif",
+                "jans-auth/clients.ldif",
+                "jans-fido2/fido2.ldif",
+                "jans-scim/configuration.ldif",
+                "jans-scim/clients.ldif",
+                # "scim.ldif",
+                # "fido2.ldif",
+                # "oxidp.ldif",
+                # "oxtrust_api.ldif",
+                # "passport.ldif",
+                # "oxpassport-config.ldif",
+                # "gluu_radius_base.ldif",
+                # "gluu_radius_server.ldif",
+                # "clients.ldif",
+                # "oxtrust_api_clients.ldif",
+                # "scim_clients.ldif",
                 "o_metric.ldif",
-                "gluu_radius_clients.ldif",
-                "passport_clients.ldif",
-                "casa.ldif",
-                "scripts_casa.ldif",
+                # "gluu_radius_clients.ldif",
+                # "passport_clients.ldif",
+                # "casa.ldif",
+                # "scripts_casa.ldif",
             ],
             "user": [
-                "people.ldif",
-                "groups.ldif",
+                # "people.ldif",
+                # "groups.ldif",
             ],
             "site": [
                 "o_site.ldif",
@@ -864,9 +876,11 @@ class LDAPBackend(object):
             self.check_indexes(mapping)
 
             for file_ in files:
-                logger.info("Importing {} file".format(file_))
-                src = "/app/templates/ldif/{}".format(file_)
-                dst = "/app/tmp/{}".format(file_)
+                logger.info(f"Importing {file_} file")
+                src = f"/app/templates/{file_}"
+                dst = f"/app/tmp/{file_}"
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+
                 render_ldif(src, dst, ctx)
 
                 parser = LDIFParser(open(dst, "rb"))
@@ -877,7 +891,7 @@ class LDAPBackend(object):
         max_wait_time = 300
         sleep_duration = 10
 
-        for i in range(0, max_wait_time, sleep_duration):
+        for _ in range(0, max_wait_time, sleep_duration):
             try:
                 with self.conn as conn:
                     conn.add(dn, attributes=attrs)
@@ -895,20 +909,21 @@ class LDAPBackend(object):
         def is_initialized():
             persistence_type = os.environ.get("CN_PERSISTENCE_TYPE", "ldap")
             ldap_mapping = os.environ.get("CN_PERSISTENCE_LDAP_MAPPING", "default")
+            namespace = os.environ.get("CN_NAMESPACE", "jans")
 
             # a minimum service stack is having oxTrust, hence check whether entry
             # for oxTrust exists in LDAP
-            default_search = ("ou=oxtrust,ou=configuration,o=gluu",
-                              "(objectClass=oxTrustConfiguration)")
+            default_search = (f"ou=jans-auth,ou=configuration,o={namespace}",
+                              "(objectClass=jansAppConf)")
 
             if persistence_type == "hybrid":
                 # `cache` and `token` mapping only have base entries
                 search_mapping = {
                     "default": default_search,
-                    "user": ("inum=60B7,ou=groups,o=gluu", "(objectClass=gluuGroup)"),
+                    "user": (f"inum=60B7,ou=groups,o={namespace}", "(objectClass=gluuGroup)"),
                     "site": ("ou=cache-refresh,o=site", "(ou=people)"),
-                    "cache": ("o=gluu", "(objectClass=gluuOrganization)"),
-                    "token": ("ou=tokens,o=gluu", "(ou=tokens)"),
+                    "cache": (f"o={namespace}", "(objectClass=gluuOrganization)"),
+                    "token": (f"ou=tokens,o={namespace}", "(ou=tokens)"),
                 }
                 search = search_mapping[ldap_mapping]
             else:
