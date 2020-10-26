@@ -49,14 +49,14 @@
     },
 
     {
-        "attribute": "jansId",
+        "attribute": "oxId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansClntId",
+        "attribute": "oxAuthClientId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -70,7 +70,7 @@
     },
 
     {
-        "attribute": "jansClntSecretExpAt",
+        "attribute": "oxAuthClientSecretExpiresAt",
         "type": "date",
         "index": ["ordering"],
         "backend": ["userRoot"]
@@ -96,28 +96,28 @@
         "backend": ["userRoot"]
     },
     {
-        "attribute": "jansSectorIdentifier",
+        "attribute": "oxSectorIdentifier",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansStatus",
+        "attribute": "gluuStatus",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot", "site"]
     },
 
     {
-        "attribute": "jansState",
+        "attribute": "oxState",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansScrTyp",
+        "attribute": "oxScriptType",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot", "site"]
@@ -131,7 +131,7 @@
     },
 
     {
-        "attribute": "jansLastAccessTime",
+        "attribute": "oxLastAccessTime",
         "type": "date",
         "index": ["ordering"],
         "backend": ["userRoot"]
@@ -145,14 +145,14 @@
     },
 
     {
-        "attribute": "jansApp",
+        "attribute": "oxApplication",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansReqId",
+        "attribute": "oxRequestId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -166,42 +166,42 @@
     },
 
     {
-        "attribute": "jansStartDate",
+        "attribute": "oxStartDate",
         "type": "date",
         "index": ["ordering"],
         "backend": ["userRoot", "metric"]
     },
 
     {
-        "attribute": "jansEndDate",
+        "attribute": "oxEndDate",
         "type": "date",
         "index": ["ordering"],
         "backend": ["userRoot", "metric"]
     },
 
     {
-        "attribute": "jansAppTyp",
+        "attribute": "oxApplicationType",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot", "metric"]
     },
 
     {
-        "attribute": "jansMetricTyp",
+        "attribute": "oxMetricType",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot", "metric"]
     },
 
     {
-        "attribute": "jansDeviceHashCode",
+        "attribute": "oxDeviceHashCode",
         "type": "integer",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansDeviceKeyHandle",
+        "attribute": "oxDeviceKeyHandle",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -215,21 +215,28 @@
     },
 
     {
-        "attribute": "jansExternalUid",
+        "attribute": "sid",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansTicket",
+        "attribute": "oxExternalUid",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansCodeChallenge",
+        "attribute": "oxTicket",
+        "type": "string",
+        "index": ["equality"],
+        "backend": ["userRoot"]
+    },
+
+    {
+        "attribute": "oxCodeChallenge",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -243,14 +250,14 @@
     },
 
     {
-        "attribute": "jansCodeChallengeHash",
+        "attribute": "oxCodeChallengeHash",
         "type": "integer",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansPublicKeyId",
+        "attribute": "oxPublicKeyId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -264,35 +271,35 @@
     },
 
     {
-        "attribute": "jansAttrs",
+        "attribute": "oxAttributes",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansConfCode",
+        "attribute": "oxConfigurationCode",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansResourceSetId",
+        "attribute": "oxResourceSetId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansUmaScope",
+        "attribute": "oxAuthUmaScope",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansUsrId",
+        "attribute": "oxAuthUserId",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -302,18 +309,18 @@
         "attribute": "del",
         "type": "boolean",
         "index": ["equality"],
-        "backend": ["userRoot"]
+        "backend": ["userRoot", "metric"]
     },
 
     {
-        "attribute": "jansExternalId",
+        "attribute": "oxTrustExternalId",
         "type": "string",
         "index": ["presence", "equality"],
         "backend": ["userRoot"]
     },
 
     {
-        "attribute": "jansUsrDN",
+        "attribute": "oxAuthUserDN",
         "type": "string",
         "index": ["presence", "equality"],
         "backend": ["userRoot"]

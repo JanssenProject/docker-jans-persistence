@@ -6,20 +6,20 @@ from java.nio.charset import Charset
 from org.apache.http.params import CoreConnectionPNames
 
 from org.oxauth.persistence.model.configuration import JanssenConfiguration
-from org.jans.oxauth.security import Identity
-from org.jans.oxauth.service import AuthenticationService, UserService
-from org.jans.oxauth.service.common import EncryptionService
-from org.jans.oxauth.service.custom import CustomScriptService
-from org.jans.oxauth.service.net import HttpService
-from org.jans.oxauth.util import ServerUtil
-from org.jans.model import SimpleCustomProperty
-from org.jans.model.casa import ApplicationConfiguration
-from org.jans.model.custom.script import CustomScriptType
-from org.jans.model.custom.script.type.auth import PersonAuthenticationType
-from org.jans.persist import PersistenceEntryManager
-from org.jans.service import CacheService
-from org.jans.service.cdi.util import CdiUtil
-from org.jans.util import StringHelper
+from io.jans.as.security import Identity
+from io.jans.as.service import AuthenticationService, UserService
+from io.jans.as.service.common import EncryptionService
+from io.jans.as.service.custom import CustomScriptService
+from io.jans.as.service.net import HttpService
+from io.jans.as.util import ServerUtil
+from io.jans.model import SimpleCustomProperty
+from io.jans.model.casa import ApplicationConfiguration
+from io.jans.model.custom.script import CustomScriptType
+from io.jans.model.custom.script.type.auth import PersonAuthenticationType
+from io.jans.persist import PersistenceEntryManager
+from io.jans.service import CacheService
+from io.jans.service.cdi.util import CdiUtil
+from io.jans.util import StringHelper
 
 try:
     import json
@@ -43,7 +43,7 @@ class PersonAuthentication(PersonAuthenticationType):
         self.uid_attr = self.getLocalPrimaryKey()
 
         custScriptService = CdiUtil.bean(CustomScriptService)
-        self.scriptsList = custScriptService.findCustomScripts(Collections.singletonList(CustomScriptType.PERSON_AUTHENTICATION), "oxConfigurationProperty", "displayName", "oxEnabled", "oxLevel")
+        self.scriptsList = custScriptService.findCustomScripts(Collections.singletonList(CustomScriptType.PERSON_AUTHENTICATION), "oxConfigurationProperty", "displayName", "jansEnabled", "oxLevel")
         dynamicMethods = self.computeMethods(self.scriptsList)
 
         if len(dynamicMethods) > 0:
