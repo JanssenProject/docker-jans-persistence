@@ -2066,7 +2066,7 @@
     {
       "equality": "caseIgnoreMatch",
       "names": [
-        "jansenticationMode"
+        "jansAuthMode"
       ],
       "oid": "jansAttr",
       "substr": "caseIgnoreSubstringsMatch",
@@ -4174,10 +4174,10 @@
       "x_origin": "Jans created attribute"
     },
     {
-      "desc": "jansenticationData",
+      "desc": "jansAuthData",
       "equality": "caseIgnoreMatch",
       "names": [
-        "jansenticationData"
+        "jansAuthData"
       ],
       "oid": "jansAttr",
       "substr": "caseIgnoreSubstringsMatch",
@@ -4261,7 +4261,7 @@
       "desc": "Status of the entry, used by many objectclasses",
       "equality": "booleanMatch",
       "names": [
-        "oxEnabled"
+        "jansEnabled"
       ],
       "oid": "jansAttr",
       "syntax": "1.3.6.1.4.1.1466.115.121.1.7",
@@ -4754,7 +4754,7 @@
         "inum",
         "inumFN",
         "o",
-        "jansenticationMode",
+        "jansAuthMode",
         "excludeAuthnMode",
         "jansIDPAuthn",
         "jansLogViewerConfig",
@@ -5120,7 +5120,7 @@
         "objectclass"
       ],
       "names": [
-        "jansCustomScope"
+        "jansScope"
       ],
       "oid": "jansObjClass",
       "sup": [
@@ -5499,7 +5499,7 @@
         "jansConfProperty",
         "jansLevel",
         "jansRevision",
-        "oxEnabled",
+        "jansEnabled",
         "jansScrError",
         "jansAlias"
       ],
@@ -5734,7 +5734,7 @@
         "jansSessStateId",
         "jansCodeChallenge",
         "personInum",
-        "jansenticationData",
+        "jansAuthData",
         "jansStatus"
       ],
       "must": [
