@@ -136,7 +136,7 @@ jansScr::%(uma_rpt_policy_umaclientauthzrptpolicy)s
 jansScrTyp: uma_rpt_policy
 objectClass: top
 objectClass: jansCustomScr
-jansEnabled: false
+jansEnabled: %(enable_scim_access_policy)s
 programmingLanguage: python
 
 dn: inum=2DAF-F996,ou=scripts,o=jans
@@ -568,4 +568,3 @@ objectClass: top
 objectClass: jansCustomScr
 jansEnabled: false
 programmingLanguage: python
-

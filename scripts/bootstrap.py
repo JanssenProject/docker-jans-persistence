@@ -397,10 +397,10 @@ def get_base_ctx(manager):
         # "enableRadiusScripts": "false",  # @TODO: enable it?
         # "gluu_ro_client_base64_jwks": manager.secret.get("gluu_ro_client_base64_jwks"),
 
-        "gluuPassportEnabled": str(as_boolean(CN_PASSPORT_ENABLED)).lower(),
-        "gluuRadiusEnabled": str(as_boolean(CN_RADIUS_ENABLED)).lower(),
-        "gluuSamlEnabled": str(as_boolean(CN_SAML_ENABLED)).lower(),
-        "gluuScimEnabled": str(as_boolean(CN_SCIM_ENABLED)).lower(),
+        "jansPassportEnabled": str(as_boolean(CN_PASSPORT_ENABLED)).lower(),
+        "jansRadiusEnabled": str(as_boolean(CN_RADIUS_ENABLED)).lower(),
+        "jansSamlEnabled": str(as_boolean(CN_SAML_ENABLED)).lower(),
+        "jansScimEnabled": str(as_boolean(CN_SCIM_ENABLED)).lower(),
 
         "pairwiseCalculationKey": manager.secret.get("pairwiseCalculationKey"),
         "pairwiseCalculationSalt": manager.secret.get("pairwiseCalculationSalt"),
@@ -868,8 +868,8 @@ class LDAPBackend(object):
 
         ctx = prepare_template_ctx(self.manager)
 
-        for mapping, files in ldif_mappings.items():
-            self.check_indexes(mapping)
+        for _, files in ldif_mappings.items():
+            # self.check_indexes(mapping)
 
             for file_ in files:
                 logger.info(f"Importing {file_} file")
@@ -892,13 +892,10 @@ class LDAPBackend(object):
                 with self.conn as conn:
                     conn.add(dn, attributes=attrs)
                     if conn.result["result"] != 0:
-                        logger.warning("Unable to add entry with DN {0}; reason={1}".format(
-                            dn, conn.result["message"],
-                        ))
+                        logger.warning(f"Unable to add entry with DN {dn}; reason={conn.result['message']}")
                     return
             except (LDAPSessionTerminatedByServerError, LDAPSocketOpenError) as exc:
-                logger.warning("Unable to add entry with DN {0}; reason={1}; "
-                               "retrying in {2} seconds".format(dn, exc, sleep_duration))
+                logger.warning(f"Unable to add entry with DN {dn}; reason={exc}; retrying in {sleep_duration} seconds")
             time.sleep(sleep_duration)
 
     def initialize(self):
@@ -916,7 +913,7 @@ class LDAPBackend(object):
                 # `cache` and `token` mapping only have base entries
                 search_mapping = {
                     "default": default_search,
-                    "user": (f"inum=60B7,ou=groups,o={namespace}", "(objectClass=gluuGroup)"),
+                    "user": (f"inum=60B7,ou=groups,o={namespace}", "(objectClass=jansGroup)"),
                     "site": ("ou=cache-refresh,o=site", "(ou=people)"),
                     "cache": (f"o={namespace}", "(objectClass=gluuOrganization)"),
                     "token": (f"ou=tokens,o={namespace}", "(ou=tokens)"),
@@ -941,6 +938,7 @@ class LDAPBackend(object):
         if should_skip and is_initialized():
             logger.info("LDAP backend already initialized")
             return
+
         self.import_ldif()
 
 

@@ -9,10 +9,10 @@ jansIDPAuthn: {"type": "auth", "name": null, "level": 0, "priority": 1, "enabled
 jansManageIdentityPermission: true
 jansMaxLogSize: 200
 jansOrgProfileMgt: false
-jansPassportEnabled: false
-jansRadiusEnabled: false
-jansSamlEnabled: false
-jansScimEnabled: false
+jansPassportEnabled: %(jansPassportEnabled)s
+jansRadiusEnabled: %(jansRadiusEnabled)s
+jansSamlEnabled: %(jansSamlEnabled)s
+jansScimEnabled: %(jansScimEnabled)s
 jansWhitePagesEnabled: disabled
 jansAuthMode: simple_password_auth
 objectClass: top
