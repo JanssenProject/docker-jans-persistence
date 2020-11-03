@@ -558,6 +558,7 @@ class CouchbaseBackend(object):
 
         self.client = CouchbaseClient(hostname, user, password)
         self.manager = manager
+        self.index_num_replica = 0
 
     def create_buckets(self, bucket_mappings, bucket_type="couchbase"):
         sys_info = self.client.get_system_info()
@@ -633,7 +634,10 @@ class CouchbaseBackend(object):
                         attr_ = ','.join(['`{}`'.format(a) for a in index])
                         index_name = "def_{0}_{1}".format(bucket, '_'.join(index))
 
-                    f.write('CREATE INDEX %s ON `%s`(%s) USING GSI WITH {"defer_build":true};\n' % (index_name, bucket, attr_))
+                    f.write(
+                        'CREATE INDEX %s ON `%s`(%s) USING GSI WITH {"defer_build":true,"num_replica": %s};\n' % (index_name, bucket, attr_, self.index_num_replica)
+                    )
+
                     index_names.append(index_name)
 
                 if index_names:
@@ -650,7 +654,9 @@ class CouchbaseBackend(object):
                             attrquoted.append(a)
                     attrquoteds = ', '.join(attrquoted)
 
-                    f.write('CREATE INDEX `{0}_static_{1:02d}` ON `{0}`({2}) WHERE ({3})\n'.format(bucket, sic, attrquoteds, wherec))
+                    f.write(
+                        'CREATE INDEX `{0}_static_{1:02d}` ON `{0}`({2}) WHERE ({3}) WITH {{ "num_replica": {4} }}\n'.format(bucket, sic, attrquoteds, wherec, self.index_num_replica)
+                    )
                     sic += 1
 
             # exec query
@@ -733,12 +739,13 @@ class CouchbaseBackend(object):
                 return bool(data["results"])
             return False
 
-        should_skip = as_boolean(
-            os.environ.get("CN_PERSISTENCE_SKIP_EXISTING", True),
-        )
-        if should_skip and is_initialized():
-            logger.info("Couchbase backend already initialized")
-            return
+        num_replica = int(os.environ.get("CN_COUCHBASE_INDEX_NUM_REPLICA", 0))
+        num_indexer_nodes = len(self.client.get_index_nodes())
+
+        if num_replica >= num_indexer_nodes:
+            raise ValueError(f"Number of index replica ({num_replica}) must be less than available indexer nodes ({num_indexer_nodes})")
+
+        self.index_num_replica = num_replica
 
         bucket_mappings = get_bucket_mappings()
 
@@ -747,6 +754,13 @@ class CouchbaseBackend(object):
 
         time.sleep(5)
         self.create_indexes(bucket_mappings)
+
+        should_skip = as_boolean(
+            os.environ.get("CN_PERSISTENCE_SKIP_EXISTING", True),
+        )
+        if should_skip and is_initialized():
+            logger.info("Couchbase backend already initialized")
+            return
 
         time.sleep(5)
         self.import_ldif(bucket_mappings)
