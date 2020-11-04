@@ -6,13 +6,13 @@ FROM alpine:3.11
 
 RUN apk update \
     && apk add --no-cache py3-pip curl tini \
-    && apk add --no-cache --virtual build-deps git wget
+    && apk add --no-cache --virtual build-deps git wget gcc musl-dev python3-dev libffi-dev openssl-dev
 
 # ======
 # Python
 # ======
 
-RUN apk add --no-cache py3-cryptography
+RUN apk add --no-cache #py3-cryptography
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install -U pip \
     && pip3 install --no-cache-dir -r /app/requirements.txt \
