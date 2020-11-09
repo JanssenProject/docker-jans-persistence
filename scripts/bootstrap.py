@@ -534,6 +534,21 @@ def merge_fido2_ctx(ctx):
     return ctx
 
 
+def merge_scim_ctx(ctx):
+    basedir = '/app/templates/jans-scim'
+    file_mappings = {
+        'scim_dynamic_conf_base64': 'dynamic-conf.json',
+        'scim_static_conf_base64': 'static-conf.json',
+    }
+
+    for key, file_ in file_mappings.items():
+        file_path = os.path.join(basedir, file_)
+        with open(file_path) as fp:
+            ctx[key] = generate_base64_contents(fp.read() % ctx)
+
+    return ctx
+
+
 def prepare_template_ctx(manager):
     ctx = get_base_ctx(manager)
     ctx = merge_extension_ctx(ctx)
@@ -543,6 +558,7 @@ def prepare_template_ctx(manager):
     # ctx = merge_oxidp_ctx(ctx)
     # ctx = merge_passport_ctx(ctx)
     ctx = merge_fido2_ctx(ctx)
+    ctx = merge_scim_ctx(ctx)
     return ctx
 
 
