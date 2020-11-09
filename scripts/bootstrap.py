@@ -89,7 +89,6 @@ def get_bucket_mappings():
                 # "jans_radius_server.ldif",
                 # "clients.ldif",
                 # "oxtrust_api_clients.ldif",
-                # "scim_clients.ldif",
                 "o_metric.ldif",
                 # "jans_radius_clients.ldif",
                 # "passport_clients.ldif",
@@ -166,10 +165,9 @@ class AttrProcessor(object):
                 for name in names:
                     attrs[name] = {"type": type_, "multivalued": False}
 
-        # with open("/app/static/gluu_schema.json") as f:
         with open("/app/static/jans_schema.json") as f:
-            gluu_schema = json.loads(f.read()).get("attributeTypes", {})
-            for schema in gluu_schema:
+            schemas = json.loads(f.read()).get("attributeTypes", {})
+            for schema in schemas:
                 if schema.get("json"):
                     type_ = "json"
                 elif schema["syntax"] in self.syntax_types:
@@ -257,8 +255,7 @@ def transform_entry(entry, attr_processor):
         ocs = entry[k]
 
         for oc in ocs:
-            # remove_oc = any(["Custom" in oc, "gluu" not in oc.lower()])
-            remove_oc = any(["Custom" in oc, not oc.lower().startswith("js")])
+            remove_oc = any(["Custom" in oc, "jans" not in oc.lower()])
             if len(ocs) > 1 and remove_oc:
                 ocs.remove(oc)
         entry[k] = ocs[0]
@@ -594,14 +591,14 @@ class CouchbaseBackend(object):
         if total_mem < min_mem:
             logger.error("Available quota on couchbase node is less than {} MB".format(min_mem))
 
-        # always create `gluu` bucket even when `default` mapping stored in LDAP
+        # always create `jans` bucket even when `default` mapping stored in LDAP
         if CN_PERSISTENCE_TYPE == "hybrid" and CN_PERSISTENCE_LDAP_MAPPING == "default":
             memsize = 100
 
-            logger.info("Creating bucket {0} with type {1} and RAM size {2}".format("gluu", bucket_type, memsize))
-            req = self.client.add_bucket("gluu", memsize, bucket_type)
+            logger.info("Creating bucket {0} with type {1} and RAM size {2}".format("jans", bucket_type, memsize))
+            req = self.client.add_bucket("jans", memsize, bucket_type)
             if not req.ok:
-                logger.warning("Failed to create bucket {}; reason={}".format("gluu", req.text))
+                logger.warning("Failed to create bucket {}; reason={}".format("jans", req.text))
 
         req = self.client.get_buckets()
         if req.ok:
@@ -737,13 +734,13 @@ class CouchbaseBackend(object):
             persistence_type = os.environ.get("CN_PERSISTENCE_TYPE", "couchbase")
             ldap_mapping = os.environ.get("CN_PERSISTENCE_LDAP_MAPPING", "default")
 
-            # only `gluu` and `gluu_user` buckets that may have initial data;
+            # only `jans` and `jans_user` buckets that may have initial data;
             # these data also affected by LDAP mapping selection;
             # by default we will choose the `gluu` bucket
             bucket, key = "jans", "configuration_oxtrust"
 
             # if `hybrid` is selected and default mapping is stored in LDAP,
-            # the `gluu` bucket won't have data, hence we check the `gluu_user` instead
+            # the `jans` bucket won't have data, hence we check the `jans_user` instead
             if persistence_type == "hybrid" and ldap_mapping == "default":
                 bucket, key = "jans_user", "groups_60B7"
 
@@ -864,7 +861,6 @@ class LDAPBackend(object):
                 # "gluu_radius_server.ldif",
                 # "clients.ldif",
                 # "oxtrust_api_clients.ldif",
-                # "scim_clients.ldif",
                 "o_metric.ldif",
                 # "gluu_radius_clients.ldif",
                 # "passport_clients.ldif",
@@ -898,8 +894,8 @@ class LDAPBackend(object):
 
         ctx = prepare_template_ctx(self.manager)
 
-        for _, files in ldif_mappings.items():
-            # self.check_indexes(mapping)
+        for mapping, files in ldif_mappings.items():
+            self.check_indexes(mapping)
 
             for file_ in files:
                 logger.info(f"Importing {file_} file")
@@ -943,9 +939,9 @@ class LDAPBackend(object):
                 # `cache` and `token` mapping only have base entries
                 search_mapping = {
                     "default": default_search,
-                    "user": (f"inum=60B7,ou=groups,o={namespace}", "(objectClass=jansGroup)"),
+                    "user": (f"inum=60B7,ou=groups,o={namespace}", "(objectClass=jansGrp)"),
                     "site": ("ou=cache-refresh,o=site", "(ou=people)"),
-                    "cache": (f"o={namespace}", "(objectClass=gluuOrganization)"),
+                    "cache": (f"o={namespace}", "(ou=cache)"),
                     "token": (f"ou=tokens,o={namespace}", "(ou=tokens)"),
                 }
                 search = search_mapping[ldap_mapping]
