@@ -12,7 +12,6 @@ RUN apk update \
 # Python
 # ======
 
-RUN apk add --no-cache #py3-cryptography
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install -U pip \
     && pip3 install --no-cache-dir -r /app/requirements.txt \
@@ -47,7 +46,7 @@ ENV CN_CONFIG_ADAPTER=consul \
     CN_CONFIG_CONSUL_KEY_FILE=/etc/certs/consul_client.key \
     CN_CONFIG_CONSUL_TOKEN_FILE=/etc/certs/consul_token \
     CN_CONFIG_KUBERNETES_NAMESPACE=default \
-    CN_CONFIG_KUBERNETES_CONFIGMAP=gluu \
+    CN_CONFIG_KUBERNETES_CONFIGMAP=jans \
     CN_CONFIG_KUBERNETES_USE_KUBE_CONFIG=false
 
 # ==========
@@ -65,7 +64,7 @@ ENV CN_SECRET_ADAPTER=vault \
     CN_SECRET_VAULT_KEY_FILE=/etc/certs/vault_client.key \
     CN_SECRET_VAULT_CACERT_FILE=/etc/certs/vault_ca.crt \
     CN_SECRET_KUBERNETES_NAMESPACE=default \
-    CN_SECRET_KUBERNETES_SECRET=gluu \
+    CN_SECRET_KUBERNETES_SECRET=jans \
     CN_SECRET_KUBERNETES_USE_KUBE_CONFIG=false
 
 # ===============
@@ -77,9 +76,9 @@ ENV CN_PERSISTENCE_TYPE=couchbase \
     CN_COUCHBASE_URL=localhost \
     CN_COUCHBASE_USER=admin \
     CN_COUCHBASE_CERT_FILE=/etc/certs/couchbase.crt \
-    CN_COUCHBASE_PASSWORD_FILE=/etc/gluu/conf/couchbase_password \
+    CN_COUCHBASE_PASSWORD_FILE=/etc/jans/conf/couchbase_password \
     CN_COUCHBASE_SUPERUSER="" \
-    CN_COUCHBASE_SUPERUSER_PASSWORD_FILE=/etc/gluu/conf/couchbase_superuser_password \
+    CN_COUCHBASE_SUPERUSER_PASSWORD_FILE=/etc/jans/conf/couchbase_superuser_password \
     CN_COUCHBASE_INDEX_NUM_REPLICA=0 \
     CN_LDAP_URL=localhost:1636
 
@@ -107,8 +106,9 @@ ENV CN_CACHE_TYPE=NATIVE_PERSISTENCE \
     CN_DOCUMENT_STORE_TYPE=LOCAL \
     CN_JACKRABBIT_RMI_URL="" \
     CN_JACKRABBIT_URL=http://localhost:8080 \
-    CN_JACKRABBIT_ADMIN_ID_FILE=/etc/gluu/conf/jackrabbit_admin_id \
-    CN_JACKRABBIT_ADMIN_PASSWORD_FILE=/etc/gluu/conf/jackrabbit_admin_password
+    CN_JACKRABBIT_ADMIN_ID_FILE=/etc/jans/conf/jackrabbit_admin_id \
+    CN_JACKRABBIT_ADMIN_PASSWORD_FILE=/etc/jans/conf/jackrabbit_admin_password \
+    CN_NAMESPACE=jans
 
 # ====
 # misc
@@ -122,7 +122,7 @@ LABEL name="Persistence" \
     summary="Janssen Authorization Server Persistence loader" \
     description="Generate initial data for persistence layer"
 
-RUN mkdir -p /app/tmp /etc/certs /etc/gluu/conf
+RUN mkdir -p /app/tmp /etc/certs /etc/jans/conf
 
 COPY scripts /app/scripts
 COPY static /app/static
