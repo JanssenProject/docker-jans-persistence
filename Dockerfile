@@ -129,5 +129,16 @@ COPY static /app/static
 COPY templates /app/templates
 RUN chmod +x /app/scripts/entrypoint.sh
 
+# # create non-root user
+RUN adduser -s /bin/sh -D -G root -u 1000 1000
+
+ # adjust ownership
+RUN chown -R 1000:1000 /tmp \
+    && chown -R 1000:1000 /app/tmp/ \
+    && chgrp -R 0 /tmp && chmod -R g=u /tmp \
+    && chgrp -R 0 /app/tmp && chmod -R g=u /app/tmp \
+    && chgrp -R 0 /etc/certs && chmod -R g=u /etc/certs \
+    && chgrp -R 0 /etc/jans && chmod -R g=u /etc/jans
+USER 1000
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["sh", "/app/scripts/entrypoint.sh"]
