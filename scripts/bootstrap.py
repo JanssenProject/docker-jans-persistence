@@ -101,8 +101,8 @@ def get_bucket_mappings():
         "user": {
             "bucket": "jans_user",
             "files": [
-                # "people.ldif",
-                # "groups.ldif",
+                "people.ldif",
+                "groups.ldif",
             ],
             "mem_alloc": 300,
             "document_key_prefix": ["groups_", "people_", "authorizations_"],
@@ -355,7 +355,7 @@ def get_base_ctx(manager):
         # "passport_rp_client_jks_fn": manager.config.get("passport_rp_client_jks_fn"),
         # "passport_rp_client_jks_pass": manager.secret.get("passport_rp_client_jks_pass"),
         # "encoded_ldap_pw": manager.secret.get('encoded_ldap_pw'),
-        "encoded_oxtrust_admin_password": manager.secret.get('encoded_oxtrust_admin_password'),
+        "encoded_admin_password": manager.secret.get('encoded_admin_password'),
         'scim_rs_client_id': manager.config.get('scim_rs_client_id'),
         'scim_rs_client_base64_jwks': manager.secret.get('scim_rs_client_base64_jwks'),
         'scim_rs_client_cert_alias': manager.config.get("scim_rs_client_cert_alias"),
@@ -868,8 +868,8 @@ class LDAPBackend(object):
                 # "scripts_casa.ldif",
             ],
             "user": [
-                # "people.ldif",
-                # "groups.ldif",
+                "people.ldif",
+                "groups.ldif",
             ],
             "site": [
                 "o_site.ldif",
