@@ -159,7 +159,7 @@ class LDAPBackend:
                 return bool(conn.entries)
 
         should_skip = as_boolean(
-            os.environ.get("CN_PERSISTENCE_SKIP_EXISTING", True),
+            os.environ.get("CN_PERSISTENCE_SKIP_INITIALIZED", False),
         )
         if should_skip and is_initialized():
             logger.info("LDAP backend already initialized")
