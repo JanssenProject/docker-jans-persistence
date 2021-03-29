@@ -1,3 +1,4 @@
+import json
 import logging.config
 import os
 import time
@@ -73,7 +74,8 @@ class LDAPBackend:
             time.sleep(sleep_duration)
 
     def import_ldif(self):
-        ldif_mappings = get_ldif_mappings()
+        optional_scopes = json.loads(self.manager.config.get("optional_scopes", "[]"))
+        ldif_mappings = get_ldif_mappings(optional_scopes)
 
         # hybrid means only a subsets of ldif are needed
         persistence_type = os.environ.get("CN_PERSISTENCE_TYPE", "ldap")

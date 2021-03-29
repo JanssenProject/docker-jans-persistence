@@ -165,6 +165,9 @@ def get_base_ctx(manager):
 def merge_extension_ctx(ctx):
     basedir = "/app/static/extension"
 
+    if os.environ.get("CN_DISTRIBUTION", "default") == "openbanking":
+        basedir = "/app/static/ob_extension"
+
     for ext_type in os.listdir(basedir):
         ext_type_dir = os.path.join(basedir, ext_type)
 
@@ -182,10 +185,15 @@ def merge_extension_ctx(ctx):
 def merge_auth_ctx(ctx):
     basedir = '/app/templates/jans-auth'
     file_mappings = {
-        'auth_config_base64': 'dynamic-conf.json',
+        # 'auth_config_base64': 'dynamic-conf.json',
         'auth_static_conf_base64': 'static-conf.json',
         'auth_error_base64': 'errors.json',
     }
+
+    if os.environ.get("CN_DISTRIBUTION", "default") == "openbanking":
+        file_mappings["auth_config_base64"] = "dynamic-conf.ob.json"
+    else:
+        file_mappings["auth_config_base64"] = "dynamic-conf.json"
 
     for key, file_ in file_mappings.items():
         file_path = os.path.join(basedir, file_)
@@ -290,41 +298,70 @@ def prepare_template_ctx(manager):
     return ctx
 
 
-def get_ldif_mappings():
-    ldif_mappings = {
-        "default": [
+def get_ldif_mappings(optional_scopes=None):
+    optional_scopes = optional_scopes or []
+    dist = os.environ.get("CN_DISTRIBUTION", "default")
+
+    def default_files():
+        files = [
             "base.ldif",
             "attributes.ldif",
-            "scopes.ldif",
-            "scripts.ldif",
-            "configuration.ldif",
             "jans-auth/configuration.ldif",
             "jans-auth/clients.ldif",
-            "jans-fido2/configuration.ldif",
-            "jans-scim/configuration.ldif",
-            "jans-scim/scopes.ldif",
-            "jans-scim/clients.ldif",
             "jans-config-api/scopes.ldif",
             "jans-config-api/clients.ldif",
-            # "oxidp.ldif",
-            # "passport.ldif",
-            # "oxpassport-config.ldif",
-            # "gluu_radius_base.ldif",
-            # "gluu_radius_server.ldif",
-            # "clients.ldif",
-            "o_metric.ldif",
-            # "gluu_radius_clients.ldif",
-            # "passport_clients.ldif",
-            # "casa.ldif",
-            # "scripts_casa.ldif",
-        ],
-        "user": [
-            "people.ldif",
-            "groups.ldif",
-        ],
-        "site": [
-            "o_site.ldif",
-        ],
+        ]
+
+        if dist == "openbanking":
+            files += [
+                "scopes.ob.ldif",
+                "scripts.ob.ldif",
+                "configuration.ob.ldif",
+            ]
+        else:
+            files += [
+                "scopes.ldif",
+                "scripts.ldif",
+                "configuration.ldif",
+                "o_metric.ldif",
+            ]
+
+        if "scim" in optional_scopes:
+            files += [
+                "jans-scim/configuration.ldif",
+                "jans-scim/scopes.ldif",
+                "jans-scim/clients.ldif",
+            ]
+
+        if "fido2" in optional_scopes:
+            files += [
+                "jans-fido2/configuration.ldif",
+            ]
+        return files
+
+    def user_files():
+        files = []
+
+        if dist != "openbanking":
+            files += [
+                "people.ldif",
+                "groups.ldif",
+            ]
+        return files
+
+    def site_files():
+        files = []
+
+        if dist != "openbanking":
+            files += [
+                "o_site.ldif",
+            ]
+        return files
+
+    ldif_mappings = {
+        "default": default_files(),
+        "user": user_files(),
+        "site": site_files(),
         "cache": [],
         "token": [],
         "session": [],
