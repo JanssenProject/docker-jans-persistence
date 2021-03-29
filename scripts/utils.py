@@ -309,7 +309,6 @@ def get_ldif_mappings(optional_scopes=None):
             "jans-auth/configuration.ldif",
             "jans-auth/clients.ldif",
             "jans-config-api/scopes.ldif",
-            "jans-config-api/clients.ldif",
         ]
 
         if dist == "openbanking":
@@ -317,6 +316,7 @@ def get_ldif_mappings(optional_scopes=None):
                 "scopes.ob.ldif",
                 "scripts.ob.ldif",
                 "configuration.ob.ldif",
+                "jans-config-api/clients.ob.ldif",
             ]
         else:
             files += [
@@ -324,6 +324,7 @@ def get_ldif_mappings(optional_scopes=None):
                 "scripts.ldif",
                 "configuration.ldif",
                 "o_metric.ldif",
+                "jans-config-api/clients.ldif",
             ]
 
         if "scim" in optional_scopes:

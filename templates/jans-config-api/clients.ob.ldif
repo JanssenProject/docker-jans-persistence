@@ -10,7 +10,7 @@ jansClntSecret: %(jca_client_encoded_pw)s
 jansDisabled: false
 jansGrantTyp: authorization_code
 jansGrantTyp: refresh_token
-jansGrantTyp: client_credentials
+jansGrantTyp: password
 jansIdTknSignedRespAlg: RS256
 jansInclClaimsInIdTkn: false
 jansLogoutSessRequired: false
