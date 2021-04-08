@@ -141,7 +141,6 @@ def get_base_ctx(manager):
         "pairwiseCalculationKey": manager.secret.get("pairwiseCalculationKey"),
         "pairwiseCalculationSalt": manager.secret.get("pairwiseCalculationSalt"),
         "default_openid_jks_dn_name": manager.config.get("default_openid_jks_dn_name"),
-        "auth_openid_jks_fn": manager.config.get("auth_openid_jks_fn"),
         "auth_openid_jks_pass": manager.secret.get("auth_openid_jks_pass"),
         "auth_legacyIdTokenClaims": manager.config.get("auth_legacyIdTokenClaims"),
         "passportSpTLSCert": manager.config.get("passportSpTLSCert"),
@@ -159,6 +158,20 @@ def get_base_ctx(manager):
         "jca_client_id": manager.config.get("jca_client_id"),
         "jca_client_encoded_pw": manager.secret.get("jca_client_encoded_pw"),
     }
+
+    # JWKS URI
+    jwks_uri = f"https://{ctx['hostname']}/jans-auth/restv1/jwks"
+    auth_openid_jks_fn = manager.config.get("auth_openid_jks_fn")
+
+    ext_jwks_uri = os.environ.get("CN_EXT_SIGNING_JWKS_URI", "")
+    if ext_jwks_uri:
+        jwks_uri = ext_jwks_uri
+        auth_openid_jks_fn = "/etc/certs/ext-signing.jks"
+
+    ctx["jwks_uri"] = jwks_uri
+    ctx["auth_openid_jks_fn"] = auth_openid_jks_fn
+
+    # finalize ctx
     return ctx
 
 
@@ -306,9 +319,6 @@ def get_ldif_mappings(optional_scopes=None):
         files = [
             "base.ldif",
             "attributes.ldif",
-            "jans-auth/configuration.ldif",
-            "jans-auth/clients.ldif",
-            "jans-config-api/scopes.ldif",
         ]
 
         if dist == "openbanking":
@@ -316,6 +326,7 @@ def get_ldif_mappings(optional_scopes=None):
                 "scopes.ob.ldif",
                 "scripts.ob.ldif",
                 "configuration.ob.ldif",
+                "jans-config-api/scopes.ob.ldif",
                 "jans-config-api/clients.ob.ldif",
             ]
         else:
@@ -324,8 +335,14 @@ def get_ldif_mappings(optional_scopes=None):
                 "scripts.ldif",
                 "configuration.ldif",
                 "o_metric.ldif",
+                "jans-config-api/scopes.ldif",
                 "jans-config-api/clients.ldif",
             ]
+
+        files += [
+            "jans-auth/configuration.ldif",
+            "jans-auth/clients.ldif",
+        ]
 
         if "scim" in optional_scopes:
             files += [

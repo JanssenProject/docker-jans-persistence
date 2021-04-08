@@ -8,7 +8,7 @@
     "clientInfoEndpoint":"https://%(hostname)s/jans-auth/restv1/clientinfo",
     "checkSessionIFrame":"https://%(hostname)s/jans-auth/opiframe.htm",
     "endSessionEndpoint":"https://%(hostname)s/jans-auth/restv1/end_session",
-    "jwksUri":"https://%(hostname)s/jans-auth/restv1/jwks",
+    "jwksUri":"%(jwks_uri)s",
     "registrationEndpoint":"https://%(hostname)s/jans-auth/restv1/register",
     "openIdDiscoveryEndpoint":"https://%(hostname)s/.well-known/webfinger",
     "openIdConfigurationEndpoint":"https://%(hostname)s/.well-known/openid-configuration",
@@ -60,10 +60,12 @@
         "authorization_code",
         "refresh_token"
     ],
+    "allowIdTokenWithoutImplicitGrantType": true,
     "subjectTypesSupported":[
         "pairwise"
     ],
     "defaultSubjectType": "pairwise",
+    "keySignWithSameKeyButDiffAlg": true,
     "userInfoSigningAlgValuesSupported":[
     ],
     "userInfoEncryptionAlgValuesSupported":[
@@ -71,7 +73,8 @@
     "userInfoEncryptionEncValuesSupported":[
     ],
     "idTokenSigningAlgValuesSupported":[
-        "PS256"
+        "PS256",
+        "RS256"
     ],
     "idTokenEncryptionAlgValuesSupported":[
     ],
@@ -79,7 +82,8 @@
     ],
     "requestObjectSigningAlgValuesSupported":[
         "HS256",
-        "RS256"
+        "RS256",
+        "PS256"
     ],
     "jwksAlgorithmsSupported":[
         "RS256",
@@ -103,7 +107,8 @@
         "tls_client_auth"
     ],
     "tokenEndpointAuthSigningAlgValuesSupported":[
-        "PS256"
+        "PS256",
+        "RS256"
     ],
     "dynamicRegistrationCustomAttributes":[
     ],
@@ -131,6 +136,9 @@
         "tr"
     ],
     "dynamicGrantTypeDefault":[
+        "client_credentials",
+        "authorization_code",
+        "refresh_token"
     ],
     "claimsParameterSupported":true,
     "requestParameterSupported":true,
@@ -158,7 +166,7 @@
     "umaRestrictResourceToAssociatedClient":false,
     "umaKeepClientDuringResourceSetRegistration":true,
     "umaRptAsJwt":false,
-    "cleanServiceInterval":60,
+    "cleanServiceInterval":86400,
     "cleanServiceBatchChunkSize": 10000,
     "keyRegenerationEnabled":false,
     "keyRegenerationInterval":48,
@@ -171,12 +179,13 @@
     "dcrSignatureValidationJwks": null,
     "dcrSignatureValidationJwksUri": null,
     "dcrAuthorizationWithClientCredentials": true,
+    "dcrSkipSignatureValidation": true,
     "softwareStatementValidationType": "script",
     "softwareStatementValidationClaimName": "jwks_uri",
     "dynamicRegistrationEnabled":true,
     "dynamicRegistrationExpirationTime":-1,
     "dynamicRegistrationPersistClientAuthorizations":true,
-    "trustedClientEnabled":false,
+    "trustedClientEnabled":true,
     "skipAuthorizationForOpenIdScopeAndPairwiseId": false,
     "dynamicRegistrationScopesParamEnabled":false,
     "dynamicRegistrationCustomObjectClass":"",
