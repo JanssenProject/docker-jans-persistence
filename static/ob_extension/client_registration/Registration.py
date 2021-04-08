@@ -6,6 +6,9 @@
 from io.jans.model.custom.script.type.client import ClientRegistrationType
 from io.jans.service.cdi.util import CdiUtil
 from io.jans.as.model.util import JwtUtil
+from io.jans.as.model.util import CertUtils
+from io.jans.as.model.jwt import Jwt
+
 
 import java
 
@@ -25,7 +28,21 @@ class ClientRegistration(ClientRegistrationType):
 
     def createClient(self, registerRequest, client, configurationAttributes):
         print "Client registration. CreateClient method"
+
+        cert = CertUtils.x509CertificateFromPem(configurationAttributes.get("certProperty").getValue1())
+        cn = CertUtils.getCN(cert)
+        print "Client registration. cn: " + cn
+
+        client.setDn("inum=" + cn + ",ou=clients,o=jans")
+        client.setTrustedClient(True)
+        client.setPersistClientAuthorizations(False)
+        client.setClientId(cn)
+        client.setJwksUri(Jwt.parse(registerRequest.getSoftwareStatement()).getClaims().getClaimAsString("org_jwks_endpoint"))
+        
         return True
+        
+
+        
 
     def updateClient(self, registerRequest, client, configurationAttributes):
         print "Client registration. UpdateClient method"
