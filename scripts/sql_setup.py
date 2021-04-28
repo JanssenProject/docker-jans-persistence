@@ -9,11 +9,9 @@ from string import Template
 
 from ldap3.utils import dn as dnutils
 from ldif3 import LDIFParser
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.exc import NotSupportedError
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import func
-from sqlalchemy import select
+# from sqlalchemy.exc import IntegrityError
+# from sqlalchemy.exc import NotSupportedError
+# from sqlalchemy.exc import OperationalError
 
 from jans.pycloudlib.persistence.sql import SQLClient
 from jans.pycloudlib.utils import as_boolean
@@ -34,7 +32,7 @@ class SQLBackend:
         self.manager = manager
 
         self.db_dialect = os.environ.get("CN_SQL_DB_DIALECT", "mysql")
-        self.db_name = os.environ.get("CN_SQL_DB_NAME", "jans")
+        # self.db_name = os.environ.get("CN_SQL_DB_NAME", "jans")
         self.schema_files = [
             "/app/static/jans_schema.json",
             "/app/static/custom_schema.json",
@@ -188,52 +186,43 @@ class SQLBackend:
             fields.remove("objectClass")
         return fields
 
-    def create_mysql_indexes(self, table, column, index_def):
-        idx_name = FIELD_RE.sub("_", column.name)
-        type_str = column.type.__class__.__name__
+    def create_mysql_indexes(self, table_name: str, column_name: str, column_type: str, index_def: dict):
+        # idx_name = FIELD_RE.sub("_", column_name)
+        index_name = f"{table_name}_{FIELD_RE.sub('_', column_name)}"
 
-        if type_str.lower() != "json":
-            self.client.create_index(f"{table.name}_{idx_name}", column)
+        if column_type.lower() != "json":
+            self.client.create_index(index_name, table_name, column_name)
+        else:
+            # TODO: revise JSON type
+            #
+            # some MySQL versions don't support JSON array (NotSupportedError)
+            # also some of them don't support functional index that returns
+            # JSON or Geometry value
+            for i, index_str in enumerate(index_def["__common__"]["JSON"], start=1):
+                index_str_fmt = Template(index_str).safe_substitute({
+                    "field": column_name, "data_type": column_type,
+                })
+                name = f"{index_name}_json_{i}"
+                query = f'CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({index_str_fmt}))'
+                self.client.create_index_raw(query)
+
+    def create_pgsql_indexes(self, table_name: str, column_name: str, column_type: str, index_def: dict):
+        index_name = f"{table_name}_{column_name}"
+        if column_type.lower() != "json":
+            self.client.create_index(index_name, table_name, column_name)
         else:
             for i, index_str in enumerate(index_def["__common__"]["JSON"], start=1):
                 index_str_fmt = Template(index_str).safe_substitute({
-                    "field": column.name, "data_type": type_str,
+                    "field": column_name, "data_type": column_type,
                 })
-                name = f"{idx_name}_json_{i}"
-                query = f"CREATE INDEX {self.raw_quote(name)} ON {self.raw_quote(table.name)} (({index_str_fmt}))"
-
-                try:
-                    self.client.raw_query(query)
-                except (NotSupportedError, OperationalError) as exc:
-                    # TODO: revise JSON type
-                    #
-                    # some MySQL versions don't support JSON array (NotSupportedError)
-                    # also some of them don't support functional index that returns
-                    # JSON or Geometry value
-                    logger.warning(f"Unable to create index; reason={exc}")
-
-    def create_pgsql_indexes(self, table, column, index_def):
-        type_str = column.type.__class__.__name__
-
-        if type_str.lower() != "json":
-            self.client.create_index(f"{table.name}_{column.name}", column)
-        else:
-            for index_str in index_def["__common__"]["JSON"]:
-                index_str_fmt = Template(index_str).safe_substitute({
-                    "field": column.name, "data_type": type_str,
-                })
-                query = f'CREATE INDEX ON {self.raw_quote(table.name)} (({index_str_fmt}))'
-
-                try:
-                    self.client.raw_query(query)
-                except (NotSupportedError, OperationalError) as exc:
-                    # TODO: revise JSON type
-                    logger.warning(f"Unable to create index; reason={exc}")
+                name = f"{index_name}_json_{i}"
+                query = f'CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({index_str_fmt}))'
+                self.client.create_index_raw(query)
 
     def create_indexes(self):
         cb_fields = self._fields_from_cb_indexes()
 
-        for table_name, table in self.client.metadata.tables.items():
+        for table_name, column_mapping in self.client.get_table_mapping().items():
             fields = self.sql_indexes.get(table_name, {}).get("fields", [])
             fields += self.sql_indexes["__common__"]["fields"]
             fields += cb_fields
@@ -241,76 +230,75 @@ class SQLBackend:
             # make unique fields
             fields = list(set(fields))
 
-            for column in table.c:
-                if column.name == "doc_id":
+            for column_name, column_type in column_mapping.items():
+                if column_name == "doc_id":
                     continue
 
-                if column.name in fields:
-                    if self.db_dialect == "mysql":
-                        index_func = self.create_mysql_indexes
-                    else:
+                if column_name in fields:
+                    if self.db_dialect == "pgsql":
                         index_func = self.create_pgsql_indexes
-                    index_func(table, column, self.sql_indexes)
+                    elif self.db_dialect == "mysql":
+                        index_func = self.create_mysql_indexes
+                    index_func(table_name, column_name, column_type, self.sql_indexes)
 
             for i, custom in enumerate(self.sql_indexes.get(table_name, {}).get("custom", [])):
                 name = f"custom_{i}"
-                query = f"CREATE INDEX {self.raw_quote(name)} ON {self.raw_quote(table.name)} (({custom}))"
+                query = f"CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({custom}))"
+                self.client.create_index_raw(query)
 
-                try:
-                    self.client.raw_query(query)
-                except OperationalError as exc:
-                    if self.db_dialect == "mysql" and exc.orig.args[0] in [1061]:
-                        # error with following code will be suppressed
-                        # - 1061: duplicate key name
-                        pass
+        # for table_name, table in self.client.metadata.tables.items():
+        #     fields = self.sql_indexes.get(table_name, {}).get("fields", [])
+        #     fields += self.sql_indexes["__common__"]["fields"]
+        #     fields += cb_fields
+
+        #     # make unique fields
+        #     fields = list(set(fields))
+
+        #     for column in table.c:
+        #         if column.name == "doc_id":
+        #             continue
+
+        #         if column.name in fields:
+        #             if self.db_dialect == "mysql":
+        #                 index_func = self.create_mysql_indexes
+        #             else:
+        #                 index_func = self.create_pgsql_indexes
+        #             index_func(table, column, self.sql_indexes)
+
+        #     for i, custom in enumerate(self.sql_indexes.get(table_name, {}).get("custom", [])):
+        #         name = f"custom_{i}"
+        #         query = f"CREATE INDEX {self.raw_quote(name)} ON {self.raw_quote(table.name)} (({custom}))"
+
+        #         try:
+        #             self.client.raw_query(query)
+        #         except OperationalError as exc:
+        #             if self.db_dialect == "mysql" and exc.orig.args[0] in [1061]:
+        #                 # error with following code will be suppressed
+        #                 # - 1061: duplicate key name
+        #                 pass
 
     def import_ldif(self):
         ldif_mappings = get_ldif_mappings()
 
         ctx = prepare_template_ctx(self.manager)
 
-        with self.client.engine.connect() as conn:
-            for _, files in ldif_mappings.items():
-                for file_ in files:
-                    logger.info(f"Importing {file_} file")
-                    src = f"/app/templates/{file_}"
-                    dst = f"/app/tmp/{file_}"
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+        for _, files in ldif_mappings.items():
+            for file_ in files:
+                logger.info(f"Importing {file_} file")
+                src = f"/app/templates/{file_}"
+                dst = f"/app/tmp/{file_}"
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
 
-                    render_ldif(src, dst, ctx)
+                render_ldif(src, dst, ctx)
 
-                    for stmt in self.ldif_to_sql(dst):
-                        try:
-                            conn.execute(stmt)
-                        except IntegrityError as exc:
-                            if self.db_dialect == "pgsql" and exc.orig.pgcode in ["23505"]:
-                                # error with following code will be suppressed
-                                # - 23505: unique violation
-                                pass
-                            elif self.db_dialect == "mysql" and exc.orig.args[0] in [1062]:
-                                # error with following code will be suppressed
-                                # - 1062: duplicate entry
-                                pass
-                            else:
-                                raise
+                for table_name, column_mapping in self.data_from_ldif(dst):
+                    self.client.insert_into(table_name, column_mapping)
 
     def initialize(self):
         def is_initialized():
-            table = self.client.get_table("jansClnt")
-            if table is not None:
-                stmt = select(
-                    [func.count()]
-                ).select_from(
-                    table
-                ).where(
-                    table.c.doc_id == self.manager.config.get("jca_client_id")
-                )
-                with self.client.engine.connect() as conn:
-                    result = conn.execute(stmt)
-                    return result.fetchone()[0] > 0
-            return False
+            return self.client.row_exists("jansClnt", self.manager.config.get("jca_client_id"))
 
-        should_skip = as_boolean(os.environ.get("CN_PERSISTENCE_SKIP_EXISTING", True))
+        should_skip = as_boolean(os.environ.get("CN_PERSISTENCE_SKIP_INITIALIZED", True))
         if should_skip and is_initialized():
             logger.info("SQL backend already initialized")
             return
@@ -352,7 +340,8 @@ class SQLBackend:
         # fallback
         return values[0]
 
-    def ldif_to_sql(self, filename):
+    # def ldif_to_sql(self, filename):
+    def data_from_ldif(self, filename):
         with open(filename, "rb") as fd:
             parser = LDIFParser(fd)
 
@@ -387,25 +376,4 @@ class SQLBackend:
                 for attr in entry:
                     value = self.transform_value(attr, entry[attr])
                     attr_mapping[attr] = value
-
-                # populate existing JSON columns with default if value
-                # is not defined from ldif
-                table = self.client.get_table(table_name)
-                for column in table.c:
-                    unmapped = column.name not in attr_mapping
-                    is_json = column.type.__class__.__name__.lower() == "json"
-
-                    if not all([unmapped, is_json]):
-                        continue
-                    # attr_mapping[column.name] = json.dumps({"v": []})
-                    attr_mapping[column.name] = {"v": []}
-
-                # returns generator to iterate to
-                yield table.insert().values(attr_mapping)
-
-    def raw_quote(self, identifier):
-        if self.db_dialect == "mysql":
-            char = "`"
-        else:
-            char = '"'
-        return f"{char}{identifier}{char}"
+                yield table_name, attr_mapping
