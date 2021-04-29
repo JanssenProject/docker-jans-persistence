@@ -9,9 +9,6 @@ from string import Template
 
 from ldap3.utils import dn as dnutils
 from ldif3 import LDIFParser
-# from sqlalchemy.exc import IntegrityError
-# from sqlalchemy.exc import NotSupportedError
-# from sqlalchemy.exc import OperationalError
 
 from jans.pycloudlib.persistence.sql import SQLClient
 from jans.pycloudlib.utils import as_boolean
@@ -99,18 +96,27 @@ class SQLBackend:
         syntax_def = self.sql_data_types_mapping[syntax]
         type_ = syntax_def.get(self.db_dialect) or syntax_def["mysql"]
 
-        if type_["type"] != "VARCHAR":
-            return type_["type"]
+        char_type = "VARCHAR"
+        if self.db_dialect == "spanner":
+            char_type = "STRING"
 
-        if type_["size"] <= 127:
-            data_type = f"VARCHAR({type_['size']})"
-        elif type_["size"] <= 255:
-            data_type = "TINYTEXT" if self.db_dialect == "mysql" else "TEXT"
+        if type_["type"] != char_type:
+            data_type = type_["type"]
         else:
-            data_type = "TEXT"
+            if type_["size"] <= 127:
+                data_type = f"{char_type}({type_['size']})"
+            elif type_["size"] <= 255:
+                data_type = "TINYTEXT" if self.db_dialect == "mysql" else "TEXT"
+            else:
+                data_type = "TEXT"
+
+        if data_type == "TEXT" and self.db_dialect == "spanner":
+            data_type = "STRING(MAX)"
         return data_type
 
     def create_tables(self):
+        logger.info("Creating tables (if not exist)")
+
         schemas = {}
         attrs = {}
         # cached schemas that holds table's column and its type
@@ -140,8 +146,8 @@ class SQLBackend:
             doc_id_type = self.get_data_type("doc_id", table)
             table_columns[table].update({
                 "doc_id": doc_id_type,
-                "objectClass": "VARCHAR(48)",
-                "dn": "VARCHAR(128)",
+                "objectClass": "VARCHAR(48)" if self.db_dialect != "spanner" else "STRING(48)",
+                "dn": "VARCHAR(128)" if self.db_dialect != "spanner" else "STRING(128)",
             })
 
             # make sure ``oc["may"]`` doesn't have duplicate attribute
@@ -219,7 +225,12 @@ class SQLBackend:
                 query = f'CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({index_str_fmt}))'
                 self.client.create_index_raw(query)
 
+    def create_spanner_indexes(self, table_name: str, column_name: str, column_type: str, index_def: dict):
+        pass
+
     def create_indexes(self):
+        logger.info("Creating indexes (if not exist)")
+
         cb_fields = self._fields_from_cb_indexes()
 
         for table_name, column_mapping in self.client.get_table_mapping().items():
@@ -239,43 +250,14 @@ class SQLBackend:
                         index_func = self.create_pgsql_indexes
                     elif self.db_dialect == "mysql":
                         index_func = self.create_mysql_indexes
+                    elif self.db_dialect == "spanner":
+                        index_func = self.create_spanner_indexes
                     index_func(table_name, column_name, column_type, self.sql_indexes)
 
             for i, custom in enumerate(self.sql_indexes.get(table_name, {}).get("custom", [])):
                 name = f"custom_{i}"
                 query = f"CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({custom}))"
                 self.client.create_index_raw(query)
-
-        # for table_name, table in self.client.metadata.tables.items():
-        #     fields = self.sql_indexes.get(table_name, {}).get("fields", [])
-        #     fields += self.sql_indexes["__common__"]["fields"]
-        #     fields += cb_fields
-
-        #     # make unique fields
-        #     fields = list(set(fields))
-
-        #     for column in table.c:
-        #         if column.name == "doc_id":
-        #             continue
-
-        #         if column.name in fields:
-        #             if self.db_dialect == "mysql":
-        #                 index_func = self.create_mysql_indexes
-        #             else:
-        #                 index_func = self.create_pgsql_indexes
-        #             index_func(table, column, self.sql_indexes)
-
-        #     for i, custom in enumerate(self.sql_indexes.get(table_name, {}).get("custom", [])):
-        #         name = f"custom_{i}"
-        #         query = f"CREATE INDEX {self.raw_quote(name)} ON {self.raw_quote(table.name)} (({custom}))"
-
-        #         try:
-        #             self.client.raw_query(query)
-        #         except OperationalError as exc:
-        #             if self.db_dialect == "mysql" and exc.orig.args[0] in [1061]:
-        #                 # error with following code will be suppressed
-        #                 # - 1061: duplicate key name
-        #                 pass
 
     def import_ldif(self):
         ldif_mappings = get_ldif_mappings()
@@ -298,17 +280,14 @@ class SQLBackend:
         def is_initialized():
             return self.client.row_exists("jansClnt", self.manager.config.get("jca_client_id"))
 
-        should_skip = as_boolean(os.environ.get("CN_PERSISTENCE_SKIP_INITIALIZED", True))
+        should_skip = as_boolean(os.environ.get("CN_PERSISTENCE_SKIP_INITIALIZED", False))
         if should_skip and is_initialized():
             logger.info("SQL backend already initialized")
             return
 
-        logger.info("Creating tables (if not exist)")
         self.create_tables()
-
-        logger.info("Creating indexes (if not exist)")
-        self.create_indexes()
-
+        if self.db_dialect != "spanner":
+            self.create_indexes()
         self.import_ldif()
 
     def transform_value(self, key, values):
@@ -331,11 +310,30 @@ class SQLBackend:
 
         if data_type in ("DATETIME(3)", "TIMESTAMP",):
             dval = values[0].strip("Z")
-            return "{}-{}-{} {}:{}:{}{}".format(dval[0:4], dval[4:6], dval[6:8], dval[8:10], dval[10:12], dval[12:14], dval[14:17])
+            sep = " "
+            postfix = ""
+            if self.db_dialect == "spanner":
+                sep = "T"
+                postfix = "Z"
+            # return "{}-{}-{} {}:{}:{}{}".format(dval[0:4], dval[4:6], dval[6:8], dval[8:10], dval[10:12], dval[12:14], dval[14:17])
+            return "{}-{}-{}{}{}:{}:{}{}{}".format(
+                dval[0:4],
+                dval[4:6],
+                dval[6:8],
+                sep,
+                dval[8:10],
+                dval[10:12],
+                dval[12:14],
+                dval[14:17],
+                postfix,
+            )
 
         if data_type == "JSON":
             # return json.dumps({"v": values})
             return {"v": values}
+
+        if data_type == "ARRAY<STRING(MAX)>":
+            return values
 
         # fallback
         return values[0]
