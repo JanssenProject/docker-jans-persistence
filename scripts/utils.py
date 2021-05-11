@@ -90,9 +90,10 @@ def get_base_ctx(manager):
         "jca_pw": jca_pw,
         "jca_pw_encoded": jca_pw_encoded,
 
-        'ldap_hostname': manager.config.get('ldap_init_host', "localhost"),
-        'ldaps_port': manager.config.get('ldap_init_port', 1636),
+        'ldap_hostname': manager.config.get('ldap_init_host'),
+        'ldaps_port': manager.config.get('ldap_init_port'),
         'ldap_binddn': manager.config.get('ldap_binddn'),
+        "ldap_use_ssl": str(as_boolean(os.environ.get("CN_LDAP_USE_SSL", True))).lower(),
         'encoded_ox_ldap_pw': manager.secret.get('encoded_ox_ldap_pw'),
         'jetty_base': manager.config.get('jetty_base'),
         'orgName': manager.config.get('orgName'),
@@ -163,10 +164,10 @@ def get_base_ctx(manager):
     jwks_uri = f"https://{ctx['hostname']}/jans-auth/restv1/jwks"
     auth_openid_jks_fn = manager.config.get("auth_openid_jks_fn")
 
-    ext_jwks_uri = os.environ.get("CN_EXT_SIGNING_JWKS_URI", "")
+    ext_jwks_uri = os.environ.get("CN_OB_EXT_SIGNING_JWKS_URI", "")
     if ext_jwks_uri:
         jwks_uri = ext_jwks_uri
-        auth_openid_jks_fn = "/etc/certs/ext-signing.jks"
+        auth_openid_jks_fn = "/etc/certs/ob-ext-signing.jks"
 
     ctx["jwks_uri"] = jwks_uri
     ctx["auth_openid_jks_fn"] = auth_openid_jks_fn
