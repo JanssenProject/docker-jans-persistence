@@ -225,8 +225,8 @@ class SQLBackend:
                     self.client.create_index(query)
 
         for i, custom in enumerate(self.sql_indexes.get(table_name, {}).get("custom", []), start=1):
-            name = f"{table_name}_custom_{i}"
-            query = f"CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} (({custom}))"
+            name = f"{table_name}_CustomIdx{i}"
+            query = f"CREATE INDEX {self.client.quoted_id(name)} ON {self.client.quoted_id(table_name)} ({custom})"
             self.client.create_index(query)
 
     def create_pgsql_indexes(self, table_name: str, column_mapping: dict):
