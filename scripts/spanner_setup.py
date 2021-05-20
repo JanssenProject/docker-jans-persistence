@@ -235,7 +235,8 @@ class SpannerBackend:
             self.create_spanner_indexes(table_name, column_mapping)
 
     def import_ldif(self):
-        ldif_mappings = get_ldif_mappings()
+        optional_scopes = json.loads(self.manager.config.get("optional_scopes", "[]"))
+        ldif_mappings = get_ldif_mappings(optional_scopes)
 
         ctx = prepare_template_ctx(self.manager)
 
