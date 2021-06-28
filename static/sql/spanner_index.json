@@ -11,7 +11,7 @@
     ],
     "custom": []
   },
-  "jansPerson_oxExternalUid": {
+  "jansPerson_jansExtUid": {
     "fields": [
       "jansExternalUid"
     ],
@@ -32,6 +32,14 @@
       "description",
       "jansRegistrationAccessTkn",
       "jansClntSecretExpAt"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "jansPar": {
+    "fields": [
+      "jansId"
     ],
     "custom": [
       "`del`, `exp`"
