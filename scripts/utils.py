@@ -337,7 +337,7 @@ def merge_config_api_ctx(ctx):
         }
 
     local_ctx = {
-        "apiApprovedIssuer": os.environ.get("CN_APPROVED_ISSUER") or f"https://{ctx['hostname']}",
+        "apiApprovedIssuer": os.environ.get("CN_CONFIG_API_APPROVED_ISSUER") or f"https://{ctx['hostname']}",
         "apiProtectionType": "oauth2",
         "jca_client_id": ctx["jca_client_id"],
         "jca_client_encoded_pw": ctx["jca_client_encoded_pw"],

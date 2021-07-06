@@ -117,7 +117,7 @@ ENV CN_CACHE_TYPE=NATIVE_PERSISTENCE \
     GOOGLE_PROJECT_ID="" \
     GOOGLE_APPLICATION_CREDENTIALS=/etc/jans/conf/google-credentials.json \
     CN_AUTH_SERVER_URL="" \
-    CN_APPROVED_ISSUER=""
+    CN_CONFIG_API_APPROVED_ISSUER=""
 
 # ====
 # misc
